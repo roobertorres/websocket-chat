@@ -35,15 +35,17 @@ module.exports = async function notificarSolicitacaoAceita(id) {
 function notificarUsuario(id, grupo, tipo, solicitacao) {
     const ws = clients.get(id)
 
-    ws.forEach((conexao) => {
-        if (conexao) {
-            conexao.send(JSON.stringify({
-                grupo,
-                tipo,
-                solicitacao,
-            }))
-        }
-    })
+    if (ws) {
+        ws.forEach((conexao) => {
+            if (conexao) {
+                conexao.send(JSON.stringify({
+                    grupo,
+                    tipo,
+                    solicitacao,
+                }))
+            }
+        })
+    }
 }
 
 async function buscarSolicitacoes(id) {

@@ -156,6 +156,43 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
     }
 })
 
+router.delete('/solicitacoes-amizade/cancelar/:id_solicitacao_amizade', async (req, res) => {
+    const { id_usuario } = req
+    const { id_solicitacao_amizade } = req.params
+
+    try {
+        const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitante = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
+        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+
+        await db.execute('DELETE FROM solicitacao_amizade WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
+        res.send({ mensagem: 'Solicitação de amizade cancelada' })
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao cancelar a solicitação de amizade' })
+    }
+})
+
+router.get('/solicitacoes-amizade/enviadas', async (req, res) => {
+    const { id_usuario } = req
+
+    try {
+        const [solicitacoes_enviadas] = await db.query('SELECT solicitacao_amizade.id_solicitacao_amizade, usuario.id_usuario, usuario.nome_usuario, usuario.email FROM solicitacao_amizade INNER JOIN usuario ON solicitacao_amizade.usuario_solicitado = usuario.id_usuario WHERE usuario_solicitante = ? AND pendente = 1', [id_usuario])
+
+        res.send(solicitacoes_enviadas.map(solicitacao => {
+            return {
+                id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
+                nome_usuario: solicitacao.nome_usuario,
+                email: solicitacao.email
+            }
+        }))
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar as solicitações de amizade enviadas' })
+    }
+})
+
 router.get('/solicitacoes-amizade', async (req, res) => {
     const { id_usuario } = req
 
@@ -200,6 +237,8 @@ router.post('/solicitar-amizade', async (req, res) => {
     const [usuario] = await db.query('SELECT id_usuario FROM usuario WHERE email = ?', [email])
     if (usuario.length === 0) return res.status(400).send({ mensagem: 'Nenhuma conta encontrada com este e-mail.' })
 
+    console.log(usuario)
+
     // Verificar se já existe uma solicitação de amizade pendente do usuário solicitado
     const [solicitacao_recebida] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE usuario_solicitante = ? AND usuario_solicitado = ? AND pendente = 1 AND ativo = 0', [usuario[0].id_usuario, id_usuario])
     if (solicitacao_recebida.length > 0) return res.status(400).send({ mensagem: 'Esse usuário já lhe enviou uma solicitação de amizade.' })
@@ -207,6 +246,8 @@ router.post('/solicitar-amizade', async (req, res) => {
     // Verificar se já enviou solicitação
     const [solicitacao_amizade] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE usuario_solicitante = ? AND usuario_solicitado = ? AND pendente = 1 AND ativo = 0', [id_usuario, usuario[0].id_usuario])
     if (solicitacao_amizade.length > 0) return res.status(400).send({ mensagem: 'Solicitação de amizade já enviada.' })
+
+    console.log('solicitação amizade existente', solicitacao_amizade)
 
     // Verificar se já são amigos
     const [amizade_existente] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE ((usuario_solicitante = ? AND usuario_solicitado = ?) OR (usuario_solicitado = ? AND usuario_solicitante = ?)) AND ativo = 1', [id_usuario, usuario[0].id_usuario, usuario[0].id_usuario, id_usuario])
@@ -217,15 +258,15 @@ router.post('/solicitar-amizade', async (req, res) => {
         const [result] = await db.execute('INSERT INTO solicitacao_amizade (usuario_solicitante, usuario_solicitado) VALUES (?, ?)', [id_usuario, usuario[0].id_usuario])
 
         const notificarSolicitacaoAmizade = require('../functions/notificacoes/solicitacaoAmizade.js')
-        await notificarSolicitacaoAmizade(result.insertId)
+        notificarSolicitacaoAmizade(result.insertId)
 
         db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade enviada.' })
     }
     catch (err) {
+        await db.query('ROLLBACK')
         console.error(err)
         res.status(500).send({ mensagem: 'Desculpe, houve um erro ao solicitar amizade.' })
-        await db.query('ROLLBACK')
     }
 })
 

@@ -1,0 +1,245 @@
+const router = require('express').Router()
+const db = require('../config/database.js')
+
+router.get('/amigos', async (req, res) => {
+    const { id_usuario } = req
+
+    try {
+        const [amigos] = await db.query(`
+        SELECT
+            id_usuario,
+            nome_usuario,
+            email
+        FROM
+            usuario
+        WHERE
+            id_usuario
+        IN
+            (
+                SELECT
+                    usuario_solicitante
+                FROM
+                    solicitacao_amizade
+                WHERE
+                    usuario_solicitado = ?
+                AND
+                    ativo = 1
+            UNION
+                SELECT
+                    usuario_solicitado
+                FROM
+                    solicitacao_amizade
+                WHERE
+                    usuario_solicitante = ?
+                AND
+                    ativo = 1
+            )
+        `
+            , [id_usuario, id_usuario])
+
+        const [id_chat_privado_amigo] = await db.query(`
+        SELECT
+            chat.id_chat
+        FROM
+            chat
+        WHERE
+            chat.id_chat
+        IN
+            (
+                SELECT
+                    chat_participante
+                FROM
+                    participante_chat
+                WHERE
+                    usuario_participante = ?
+            )
+        AND 
+            chat.id_chat
+        IN  
+            (
+                SELECT  
+                    chat_participante
+                FROM    
+                    participante_chat
+                WHERE   
+                    usuario_participante
+                IN  
+                    (
+                        SELECT
+                            usuario_solicitante
+                        FROM
+                            solicitacao_amizade
+                        WHERE   
+                            usuario_solicitado = ?
+                        AND
+                            ativo = 1
+                    UNION
+                        SELECT
+                            usuario_solicitado
+                        FROM
+                            solicitacao_amizade
+                        WHERE
+                            usuario_solicitante = ?
+                        AND
+                            ativo = 1
+                    )
+            )
+        `
+            , [id_usuario, id_usuario, id_usuario])
+
+        res.send(amigos.map(amigo => {
+            return {
+                id_usuario: amigo.id_usuario,
+                nome_usuario: amigo.nome_usuario,
+                email: amigo.email,
+                id_chat_privado: id_chat_privado_amigo[0].id_chat
+            }
+        }))
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar os amigos' })
+    }
+})
+
+router.post('/solicitacao-amizade/recusar/:id_solicitacao_amizade', async (req, res) => {
+    const { id_usuario } = req
+    const { id_solicitacao_amizade } = req.params
+
+    try {
+        const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitado = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
+        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+
+        db.query('START TRANSACTION')
+        await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 0 WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
+
+        db.query('COMMIT')
+        res.send({ mensagem: 'Solicitação de amizade recusada' })
+    }
+    catch (err) {
+        db.query('ROLLBACK')
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao recusar a solicitação de amizade' })
+    }
+})
+
+router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, res) => {
+    const { id_usuario } = req
+    const { id_solicitacao_amizade } = req.params
+
+    try {
+        const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitado = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
+        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+
+        db.query('START TRANSACTION')
+
+        await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ? WHERE id_solicitacao_amizade = ?', [new Date(), id_solicitacao_amizade])
+
+        // Verificar se já existe um chat privado entre os usuários
+        const [chat_existente] = await db.query('SELECT * FROM chat WHERE tipo = "PRIVADO" AND id_chat IN (SELECT chat_participante FROM participante_chat WHERE usuario_participante = ?) AND id_chat IN (SELECT chat_participante FROM participante_chat WHERE usuario_participante = ?)', [id_usuario, solicitacao_amizade[0].usuario_solicitante])
+
+        if (chat_existente.length === 0) {
+            const [chat] = await db.execute('INSERT INTO chat (tipo) VALUES ("PRIVADO")')
+
+            // Adicionar os usuários participantes do chat
+            await db.execute('INSERT INTO participante_chat (chat_participante, usuario_participante) VALUES (?, ?)', [chat.insertId, id_usuario])
+            await db.execute('INSERT INTO participante_chat (chat_participante, usuario_participante) VALUES (?, ?)', [chat.insertId, solicitacao_amizade[0].usuario_solicitante])
+        }
+
+        db.query('COMMIT')
+        res.send({ mensagem: 'Solicitação de amizade aceita' })
+    }
+    catch (err) {
+        db.query('ROLLBACK')
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao aceitar a solicitação de amizade' })
+    }
+})
+
+router.get('/solicitacoes-amizade', async (req, res) => {
+    const { id_usuario } = req
+
+    try {
+        const [solicitacoes] = await db.query('SELECT solicitacao_amizade.id_solicitacao_amizade, usuario.id_usuario, usuario.nome_usuario, usuario.email FROM solicitacao_amizade INNER JOIN usuario ON solicitacao_amizade.usuario_solicitante = usuario.id_usuario WHERE usuario_solicitado = ? AND pendente = 1', [id_usuario])
+        res.send(solicitacoes.map(solicitacao => {
+            return {
+                id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
+                nome_usuario: solicitacao.nome_usuario,
+                email: solicitacao.email
+            }
+        }))
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar as solicitações de amizade' })
+    }
+})
+
+router.get('/solicitacoes-amizade/quantidade', async (req, res) => {
+    const { id_usuario } = req
+
+    try {
+        const [quantidade] = await db.query('SELECT COUNT(*) AS quantidade FROM solicitacao_amizade WHERE usuario_solicitado = ? AND pendente = 1', [id_usuario])
+        res.send({ quantidade: quantidade[0].quantidade })
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar as solicitações de amizade' })
+    }
+})
+
+router.post('/solicitar-amizade', async (req, res) => {
+    const { id_usuario } = req
+    const { email } = req.body
+
+    if (!email) return res.status(400).send({ mensagem: 'Informe o e-mail do usuário' })
+
+    if (email === req.email) return res.status(400).send({ mensagem: 'Você não pode adicionar a si mesmo.' })
+
+    // Verificar se o usuário existe
+    const [usuario] = await db.query('SELECT id_usuario FROM usuario WHERE email = ?', [email])
+    if (usuario.length === 0) return res.status(400).send({ mensagem: 'Nenhuma conta encontrada com este e-mail.' })
+
+    // Verificar se já existe uma solicitação de amizade pendente do usuário solicitado
+    const [solicitacao_recebida] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE usuario_solicitante = ? AND usuario_solicitado = ? AND pendente = 1 AND ativo = 0', [usuario[0].id_usuario, id_usuario])
+    if (solicitacao_recebida.length > 0) return res.status(400).send({ mensagem: 'Esse usuário já lhe enviou uma solicitação de amizade.' })
+
+    // Verificar se já enviou solicitação
+    const [solicitacao_amizade] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE usuario_solicitante = ? AND usuario_solicitado = ? AND pendente = 1 AND ativo = 0', [id_usuario, usuario[0].id_usuario])
+    if (solicitacao_amizade.length > 0) return res.status(400).send({ mensagem: 'Solicitação de amizade já enviada.' })
+
+    // Verificar se já são amigos
+    const [amizade_existente] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE ((usuario_solicitante = ? AND usuario_solicitado = ?) OR (usuario_solicitado = ? AND usuario_solicitante = ?)) AND ativo = 1', [id_usuario, usuario[0].id_usuario, usuario[0].id_usuario, id_usuario])
+    if (amizade_existente.length > 0) return res.status(400).send({ mensagem: 'Vocês já são amigos!' })
+
+    try {
+        await db.query('START TRANSACTION')
+        const [result] = await db.execute('INSERT INTO solicitacao_amizade (usuario_solicitante, usuario_solicitado) VALUES (?, ?)', [id_usuario, usuario[0].id_usuario])
+
+        const notificarSolicitacaoAmizade = require('../functions/notificacoes/solicitacaoAmizade.js')
+        await notificarSolicitacaoAmizade(result.insertId)
+
+        db.query('COMMIT')
+        res.send({ mensagem: 'Solicitação de amizade enviada.' })
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Desculpe, houve um erro ao solicitar amizade.' })
+        await db.query('ROLLBACK')
+    }
+})
+
+router.get('/dados', async (req, res) => {
+    const { id_usuario } = req
+
+    try {
+        const [usuario] = await db.query('SELECT nome_usuario, email, status, data_cadastro FROM usuario WHERE id_usuario = ?', [id_usuario])
+        res.send(usuario[0])
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar os dados do usuário' })
+    }
+})
+
+module.exports = router

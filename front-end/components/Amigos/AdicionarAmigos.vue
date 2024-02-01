@@ -15,42 +15,39 @@
             <p v-if="retorno !== ''" class="mb-0 p-error" :class="{ 'p-success': !erro }">
                 {{ retorno }}
             </p>
+            <AmigosSolicitacoesEnviadas />
         </template>
     </Card>
 </template>
 
-<script>
-export default {
-    data() {
-        return {
-            email: '',
-            retorno: '',
-            erro: false,
-            processando: false,
-        }
-    },
-    methods: {
-        async solicitarAmizade() {
-            this.processando = true
+<script setup>
+const email = ref('')
+const retorno = ref('')
+const erro = ref(false)
+const processando = ref(false)
 
-            await this.$axios.post('/usuario/solicitar-amizade', {
-                email: this.email
-            })
-                .then((response) => {
-                    this.erro = false
-                    this.retorno = response.data.mensagem
-                    this.email = ''
-                    setTimeout(() => this.retorno = '', 5000)
-                })
-                .catch((error) => {
-                    this.erro = true
-                    this.retorno = error.response ? error.response.data.mensagem : 'Servidor indisponível'
-                })
+const solicitarAmizade = async () => {
+    processando.value = true
 
-            this.processando = false
-        },
-    }
+    await useNuxtApp().$axios.post('/usuario/solicitar-amizade', {
+        email: email.value
+    })
+        .then((response) => {
+            useSentFriendshipRequestsStore().fetchSentFriendshipRequests()
+            erro.value = false
+            retorno.value = response.data.mensagem
+            email.value = ''
+            setTimeout(() => retorno.value = '', 5000)
+        })
+        .catch((error) => {
+            console.error(error)
+            erro.value = true
+            retorno.value = error.response ? error.response.data.mensagem : 'Servidor indisponível'
+        })
+
+    processando.value = false
 }
+
 </script>
 
 <style lang="scss">

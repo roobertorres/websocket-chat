@@ -3,7 +3,7 @@
 <script setup>
 
 onMounted(async () => {
-    await useNuxtApp().$axios.get('/logout')
+    useNuxtApp().$axios.get('/logout')
         .then(() => {
             useWebsocketStore().close()
         })

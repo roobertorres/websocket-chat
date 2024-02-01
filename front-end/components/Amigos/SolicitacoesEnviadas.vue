@@ -44,7 +44,8 @@ const cancelFriendshipRequest = async (id) => {
     await useSentFriendshipRequestsStore().cancelFriendshipRequest(id)
         .then(() => useNuxtApp().$toast.add({
             severity: 'success',
-            summary: 'Solicitação cancelada',
+            summary: 'Feito!',
+            detail: 'A solicitação foi removida',
             life: 3000
         }))
         .catch((err) => useNuxtApp().$toast.add({

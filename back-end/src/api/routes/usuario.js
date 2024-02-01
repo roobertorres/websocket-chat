@@ -7,33 +7,38 @@ router.get('/amigos', async (req, res) => {
     try {
         const [amigos] = await db.query(`
         SELECT
-            id_usuario,
-            nome_usuario,
-            email
+            usuario.id_usuario,
+            usuario.nome_usuario,
+            usuario.email,
+            usuario.status,
+            solicitacao_amizade.amigos_desde
         FROM
             usuario
+        INNER JOIN
+            solicitacao_amizade
+        ON
+            usuario.id_usuario = solicitacao_amizade.usuario_solicitante
         WHERE
-            id_usuario
-        IN
-            (
-                SELECT
-                    usuario_solicitante
-                FROM
-                    solicitacao_amizade
-                WHERE
-                    usuario_solicitado = ?
-                AND
-                    ativo = 1
-            UNION
-                SELECT
-                    usuario_solicitado
-                FROM
-                    solicitacao_amizade
-                WHERE
-                    usuario_solicitante = ?
-                AND
-                    ativo = 1
-            )
+            solicitacao_amizade.usuario_solicitado = ?
+        AND
+            solicitacao_amizade.ativo = 1
+        UNION
+        SELECT
+            usuario.id_usuario,
+            usuario.nome_usuario,
+            usuario.email,
+            usuario.status,
+            solicitacao_amizade.amigos_desde
+        FROM
+            usuario
+        INNER JOIN  
+            solicitacao_amizade
+        ON
+            usuario.id_usuario = solicitacao_amizade.usuario_solicitado
+        WHERE
+            solicitacao_amizade.usuario_solicitante = ?
+        AND
+            solicitacao_amizade.ativo = 1
         `
             , [id_usuario, id_usuario])
 
@@ -92,6 +97,8 @@ router.get('/amigos', async (req, res) => {
                 id_usuario: amigo.id_usuario,
                 nome_usuario: amigo.nome_usuario,
                 email: amigo.email,
+                amigos_desde: amigo.amigos_desde,
+                status: amigo.status,
                 id_chat_privado: id_chat_privado_amigo[0].id_chat
             }
         }))

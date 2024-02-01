@@ -1,21 +1,20 @@
-
-import TheNotificationPermission from '../components/TheNotificationPermission.vue';
 <template>
     <div class="dashboard-layout flex h-full">
         <Toast position="bottom-center" />
         <TheSidebar />
-        <div class="flex flex-column flex-1 bg-secondary p-4" style="min-height: 0">
-            <NuxtPage />
-        </div>
+        <NuxtPage class="dashboard-page flex-1 p-4" style="min-height: 0" />
         <TheWebSocket />
         <TheNotificationsPermission />
     </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .dashboard-layout {
-    * {
-        // color: var(--text-color) !important;
+    overflow: hidden;
+
+    .dashboard-page {
+        border: 1px solid red;
+        overflow-y: auto;
     }
 }
 </style>

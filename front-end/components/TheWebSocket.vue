@@ -36,6 +36,11 @@ onMounted(async () => {
 
             let mensagem = await JSON.parse(message.data)
 
+            if (mensagem.grupo === 'FRIEND_ACTIVITY') {
+                console.log(mensagem.id_usuario, mensagem.tipo)
+                useAmigosStore().setFriendStatus(mensagem.id_usuario, mensagem.tipo)
+            }
+
             if (mensagem.grupo === 'LIMPAR_NOTIFICACOES_CHAT') {
                 useChatsStore().limparNotificacoes(mensagem.id_chat)
             }

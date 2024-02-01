@@ -7,6 +7,7 @@ const wss = new WebSocketServer({ port: 8080 }, () => console.log('Servidor WebS
 const clients = new Map()
 
 wss.on('connection', async (ws, req) => {
+    const notifyFriendActivity = require('../api/functions/notificacoes/friendActivity.js')
 
     const parseCookies = cookieParser()
     parseCookies(req, {}, () => { })
@@ -21,6 +22,7 @@ wss.on('connection', async (ws, req) => {
         else {
             clients.set(id_usuario, [ws])
             console.log(`Primeira conexão do usuário ${id_usuario}`)
+            notifyFriendActivity(id_usuario, 'ONLINE')
         }
     }
     catch (err) {
@@ -40,6 +42,7 @@ wss.on('connection', async (ws, req) => {
             if (clients.get(id_usuario).length === 0) {
                 clients.delete(id_usuario)
                 console.log(`Todas as conexões do usuário ${id_usuario} foram fechadas`)
+                notifyFriendActivity(id_usuario, 'OFFLINE')
             }
             else {
                 console.log(`Uma das conexões do usuário ${id_usuario} foi fechada`)

@@ -10,7 +10,7 @@ module.exports = async (req, res, next) => {
     const secret = new TextEncoder().encode('batata')
 
     try {
-        const { payload } = await jose.jwtVerify(req.cookies.token.replace('Bearer '), secret, {
+        const { payload } = await jose.jwtVerify(req.cookies.token?.replace('Bearer '), secret, {
             issuer: 'TORRES',
         })
 

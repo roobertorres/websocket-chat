@@ -12,6 +12,9 @@ export const useAmigosStore = defineStore('amigosStore', {
         getSolicitacoesAmizade: (state) => state.solicitacoes_amizade,
     },
     actions: {
+        setFriendStatus(id, status) {
+            this.amigos.find(amigo => amigo.id_usuario === id).status = status
+        },
         async buscarAmigos() {
             const { data } = await axios.get('/usuario/amigos')
             this.amigos = data

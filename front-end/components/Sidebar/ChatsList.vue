@@ -15,7 +15,7 @@
                     <p class="m-0 text-md w-full" :title="chat[1].nome_usuario">
                         {{ chat[1].nome_usuario || 'Usuário desconhecido' }}
                     </p>
-                    <small style="color: var(--green-400)">Online</small>
+                    <!-- <small style="color: var(--green-400)">Online</small> -->
                 </div>
             </div>
             <Badge v-show="chat[1].notificacoes" :value="chat[1].notificacoes" severity="danger" />

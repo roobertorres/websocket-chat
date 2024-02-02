@@ -21,7 +21,7 @@ export const useAmigosStore = defineStore('amigosStore', {
         },
         async removerAmigo(id_usuario) {
             try {
-                const response = await axios.post(`/usuario/amigos/remover/${id_usuario}`)
+                await axios.post(`/usuario/amigos/remover/${id_usuario}`)
                 this.buscarAmigos()
             }
             catch (error) {
@@ -29,32 +29,32 @@ export const useAmigosStore = defineStore('amigosStore', {
                 throw error
             }
         },
-        async aceitarSolicitacao(solicitacao) {
-            this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === solicitacao.id_solicitacao_amizade).processando = true
+        async aceitarSolicitacao(id) {
+            this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === id).processando = true
 
             try {
-                const response = await axios.post(`/usuario/solicitacao-amizade/aceitar/${solicitacao.id_solicitacao_amizade}`)
-                this.solicitacoes_amizade = this.solicitacoes_amizade.filter(item => item.id_solicitacao_amizade !== solicitacao.id_solicitacao_amizade)
+                await axios.post(`/usuario/solicitacao-amizade/aceitar/${id}`)
+                this.solicitacoes_amizade = this.solicitacoes_amizade.filter(item => item.id_solicitacao_amizade !== id)
                 this.buscarAmigos()
             }
             catch (error) {
-                this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === solicitacao.id_solicitacao_amizade).processando = false
                 console.error(error)
-                throw error
+                this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === id).processando = false
+                useNuxtApp().$toast.add({ severity: 'info', summary: 'Oops!', detail: error.response ? error.response.data.message : 'O servidor está indisponível' })
             }
         },
-        async recusarSolicitacao(id_solicitacao_amizade) {
-            this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === id_solicitacao_amizade).processando = true
+        async recusarSolicitacao(id) {
+            this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === id).processando = true
 
             try {
-                const response = await axios.post(`/usuario/solicitacao-amizade/recusar/${id_solicitacao_amizade}`)
-                this.solicitacoes_amizade = this.solicitacoes_amizade.filter(item => item.id_solicitacao_amizade !== id_solicitacao_amizade)
+                const response = await axios.post(`/usuario/solicitacao-amizade/recusar/${id}`)
+                this.solicitacoes_amizade = this.solicitacoes_amizade.filter(item => item.id_solicitacao_amizade !== id)
                 this.buscarAmigos()
             }
             catch (error) {
-                this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === solicitacao.id_solicitacao_amizade).processando = false
                 console.error(error)
-                throw error
+                this.solicitacoes_amizade.find(item => item.id_solicitacao_amizade === solicitacao.id).processando = false
+                useNuxtApp().$toast.add({ severity: 'info', summary: 'Oops!', detail: error.response ? error.response.data.message : 'O servidor está indisponível' })
             }
         },
         async buscarSolicitacoes() {

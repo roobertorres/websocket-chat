@@ -1,6 +1,6 @@
 <template>
     <div class="gap-1 flex-1 flex flex-column align-items-center justify-content-center">
-        <h1>Olá, Roberto! 👋</h1>
+        <h1>Olá, {{ useUsuarioStore().getNomeUsuario }}! 👋</h1>
         <h4 class="m-0">Bem-vindo ao WS Chat. Use seus chats para conversar.</h4>
     </div>
 </template>

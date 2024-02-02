@@ -1,10 +1,7 @@
 <template>
     <!-- <pre>{{ useChatsStore().getChats }}</pre> -->
     <NuxtLink v-for="chat in useChatsStore().getChats" :to="{
-        path: '/dashboard/chat',
-        query: {
-            id: chat[1].id_chat
-        }
+        path: `/dashboard/chat/${chat[1].id_chat}`,
     }" class="sidebar-link border-round" activeClass="surface-100 link-active">
         <div class="sidebar-link border-round flex align-items-center justify-content-between w-full gap-2 p-2">
             <div class="flex gap-2 align-items-center flex-1">

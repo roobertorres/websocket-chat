@@ -30,7 +30,7 @@
 
                         </div>
                         <div class="flex gap-3">
-                            <Button @click="abrirConversa(amigo.id_chat_privado)" v-tooltip.bottom="'Abrir conversa'"
+                            <Button @click="navigateTo(`chat/${amigo.id_chat_privado}`)" v-tooltip.bottom="'Abrir conversa'"
                                 icon="pi pi-comments" outlined rounded />
                             <Button icon="pi pi-trash" outlined rounded severity="danger"
                                 v-tooltip.bottom="'Excluir amigo'" />
@@ -55,14 +55,5 @@ onMounted(async () => {
 
 const converterDataAmizade = (data) => {
     return new Date(data).toLocaleDateString()
-}
-
-const abrirConversa = async (id) => {
-    await navigateTo({
-        path: '/dashboard/chat',
-        query: {
-            id
-        }
-    })
 }
 </script>

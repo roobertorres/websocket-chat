@@ -21,23 +21,29 @@
 </template>
 
 <script setup>
+import { onBeforeUnmount } from 'vue';
+
 const email = ref('')
 const retorno = ref('')
 const erro = ref(false)
 const processando = ref(false)
 
+const timeOut = () => setTimeout(() => { retorno.value = ''; console.log('sumiu') }, 5000)
+onBeforeUnmount(() => { clearTimeout(timeOut()); console.log('limpou') })
+
 const solicitarAmizade = async () => {
+    clearTimeout(timeOut())
     processando.value = true
 
     await useNuxtApp().$axios.post('/usuario/solicitar-amizade', {
         email: email.value
     })
         .then((response) => {
-            useSentFriendshipRequestsStore().fetchSentFriendshipRequests()
             erro.value = false
             retorno.value = response.data.mensagem
             email.value = ''
-            setTimeout(() => retorno.value = '', 5000)
+            timeOut()
+            useSentFriendshipRequestsStore().fetchSentFriendshipRequests()
         })
         .catch((error) => {
             console.error(error)
@@ -47,6 +53,8 @@ const solicitarAmizade = async () => {
 
     processando.value = false
 }
+
+
 
 </script>
 

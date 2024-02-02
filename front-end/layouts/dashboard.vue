@@ -13,7 +13,6 @@
     overflow: hidden;
 
     .dashboard-page {
-        border: 1px solid red;
         overflow-y: auto;
     }
 }

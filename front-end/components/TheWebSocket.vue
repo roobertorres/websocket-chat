@@ -47,7 +47,7 @@ onMounted(async () => {
 
             if (mensagem.grupo === 'MENSAGEM_RECEBIDA') {
 
-                if (useRoute().path === '/dashboard/chat' && (mensagem.mensagem.chat_mensagem == useRoute().query.id)) {
+                if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
                     useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
                 }
                 else {
@@ -62,7 +62,7 @@ onMounted(async () => {
             }
 
             if (mensagem.grupo === 'MENSAGEM_ENVIADA') {
-                if (useRoute().path === '/dashboard/chat' && (mensagem.mensagem.chat_mensagem == useRoute().query.id)) {
+                if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
                     useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, {
                         ...mensagem.mensagem,
                         nome_usuario_remetente: useUsuarioStore().getNomeUsuario,

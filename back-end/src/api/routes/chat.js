@@ -82,9 +82,13 @@ router.get('/mensagens/:id_chat', async (req, res) => {
     if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
 
     try {
+        const last = req.query?.last ? String(req.query.last) : null
+        console.log(last)
+
         const [mensagens] = await db.execute(`
             SELECT
                 id_mensagem,
+                usuario_remetente,
                 texto_mensagem,
                 nome_usuario AS nome_usuario_remetente,
                 data_hora_mensagem,
@@ -95,9 +99,15 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 usuario ON id_usuario = usuario_remetente
             WHERE
                 chat_mensagem = ?
+            AND
+                (
+                ? IS NULL
+                OR id_mensagem < ?
+                )
             ORDER BY
-                id_mensagem
-        `, [id_chat])
+                id_mensagem DESC
+            LIMIT 10
+        `, [id_chat, last, last])
 
         const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
         limparNotificacoesChat(id_usuario, id_chat)

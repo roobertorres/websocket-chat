@@ -39,21 +39,22 @@ module.exports = async (id_usuario, status) => {
     }
 
     if (status === 'OFFLINE') {
+
         try {
             const [status_atual] = await db.query(`SELECT status FROM usuario WHERE id_usuario = ?`, [id_usuario])
+
 
             await db.query('START TRANSACTION')
             await db.execute(`
                 UPDATE
                     usuario
                 SET
-                    status = 'OFFLINE',
+                    status = ?,
                     ultimo_status = ?
                 WHERE
                     id_usuario = ?
 
-            `, [status, status_atual.status, id_usuario, id_usuario])
-            console.log('usuario desconectado')
+            `, [status, status_atual[0].status, id_usuario])
 
             await db.query('COMMIT')
         }

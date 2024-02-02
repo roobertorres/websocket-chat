@@ -1,5 +1,4 @@
 import axios from '../custom/axios_instance.js'
-import { useChatsStore } from './chatsStore.js'
 
 // Store de mensagens para o chat atualmente aberto
 export const useMensagensStore = defineStore('mensagensStore', {
@@ -8,11 +7,14 @@ export const useMensagensStore = defineStore('mensagensStore', {
         buscandoMensagens: false,
     }),
     getters: {
+        // retornar mensagens ordenadas pelo id asc
         getMensagens: state => state.mensagens,
+        getMensagem: state => id_mensagem => state.mensagens.get(id_mensagem),
     },
     actions: {
         adicionarMensagem(id_mensagem, mensagem) {
             this.mensagens.set(id_mensagem, mensagem)
+            this.mensagens = new Map([...this.mensagens.entries()].sort((a, b) => a[0] - b[0]))
         },
         async enviarMensagem(id_chat, mensagem) {
             try {
@@ -23,22 +25,24 @@ export const useMensagensStore = defineStore('mensagensStore', {
             }
             catch (error) {
                 console.error(error)
-                throw error
+                if (error.response) {
+                    useNuxtApp().$toast.removeAllGroups()
+                    useNuxtApp().$toast.add({ severity: 'info', summary: 'Oops!', detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível' })
+                }
             }
         },
         async buscarMensagens(id_chat) {
+            this.mensagens.clear()
             this.buscandoMensagens = true
 
-            const { data } = await axios.get(`/chat/mensagens/${id_chat}`)
+            const { data } = await axios.get(`/chat/mensagens/${id_chat}`, {
+                params: {
+                    last: this.mensagens.get(this.mensagens.size - 1)?.id_mensagem
+                }
+            })
 
             data.forEach(item => {
-                this.adicionarMensagem(item.id_mensagem, {
-                    id_mensagem: item.id_mensagem,
-                    texto_mensagem: item.texto_mensagem,
-                    nome_usuario_remetente: item.nome_usuario_remetente,
-                    data_hora_mensagem: item.data_hora_mensagem,
-                    excluida: item.excluida,
-                })
+                this.adicionarMensagem(item.id_mensagem, item)
             })
 
             this.buscandoMensagens = false

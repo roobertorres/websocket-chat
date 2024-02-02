@@ -50,13 +50,6 @@ export default {
             })
                 .then(({ data }) => {
 
-                    this.$toast.add({
-                        severity: 'success',
-                        summary: data.mensagem,
-                        detail: 'Bem-vindo(a)!',
-                        life: 3000
-                    })
-
                     this.$router.push('/chat')
                 })
                 .catch((error) => {

@@ -15,7 +15,7 @@ let notificationVisible = ref(false)
 
 onMounted(() => {
     if (!("Notification" in window)) {
-        useToast().add({
+        useNuxtApp().$toast.add({
             severity: 'warn',
             summary: 'Notificações não suportadas',
             detail: 'Este navegador não suporta notificações'

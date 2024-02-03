@@ -2,22 +2,24 @@ import axios from '../custom/axios_instance.js'
 
 export const useAmigosStore = defineStore('amigosStore', {
     state: () => ({
-        amigos: [],
+        amigos: new Map(),
         solicitacoes_amizade: [],
         quantidade_solicitacoes: 0,
         notificacoes: [],
     }),
     getters: {
-        getAmigos: (state) => state.amigos,
+        getAmigos: (state) => Array.from(state.amigos.values()),
+        getAmigo: (state) => id_usuario => state.amigos.get(id_usuario),
         getSolicitacoesAmizade: (state) => state.solicitacoes_amizade,
     },
     actions: {
         setFriendStatus(id, status) {
-            this.amigos.find(amigo => amigo.id_usuario === id).status = status
+            const amigo = this.amigos.get(id)
+            if (amigo) amigo.status = status
         },
         async buscarAmigos() {
             const { data } = await axios.get('/usuario/amigos')
-            this.amigos = data
+            if (data) data.forEach(amigo => this.amigos.set(amigo.id_usuario, amigo))
         },
         async removerAmigo(id_usuario) {
             try {

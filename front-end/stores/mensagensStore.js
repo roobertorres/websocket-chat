@@ -31,13 +31,19 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 }
             }
         },
+        async fetchLastMessageID(id_chat) {
+            const { data } = await axios.get(`/chat/mensagens/ultima-mensagem/${id_chat}`)
+            return data.id_mensagem
+        },
         async buscarMensagens(id_chat) {
             this.mensagens.clear()
             this.buscandoMensagens = true
 
+            const id_ultima_mensagem = this.mensagens ? this.mensagens.get(this.mensagens.size - 1)?.id_mensagem : await this.fetchLastMessageID(id_chat)
+
             const { data } = await axios.get(`/chat/mensagens/${id_chat}`, {
                 params: {
-                    last: this.mensagens.get(this.mensagens.size - 1)?.id_mensagem
+                    last: id_ultima_mensagem
                 }
             })
 

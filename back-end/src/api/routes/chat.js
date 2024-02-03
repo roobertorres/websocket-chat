@@ -72,6 +72,36 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     }
 })
 
+router.get('/mensagens/ultima-mensagem/:id_chat', async (req, res) => {
+    const { id_usuario } = req
+    const { id_chat } = req.params
+
+    if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
+
+    const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
+    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
+
+    try {
+        const [mensagem] = await db.execute(`
+            SELECT
+                id_mensagem
+            FROM
+                mensagem
+            WHERE
+                chat_mensagem = ?
+            ORDER BY
+                id_mensagem DESC
+            LIMIT 1
+        `, [id_chat])
+
+        res.send(mensagem)
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar a última mensagem' })
+    }
+})
+
 router.get('/mensagens/:id_chat', async (req, res) => {
     const { id_usuario } = req
     const { id_chat } = req.params
@@ -90,19 +120,16 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 id_mensagem,
                 usuario_remetente,
                 texto_mensagem,
-                nome_usuario AS nome_usuario_remetente,
                 data_hora_mensagem,
                 excluida
             FROM
                 mensagem
-            JOIN
-                usuario ON id_usuario = usuario_remetente
             WHERE
                 chat_mensagem = ?
             AND
                 (
                 ? IS NULL
-                OR id_mensagem < ?
+                OR id_mensagem <= ?
                 )
             ORDER BY
                 id_mensagem DESC

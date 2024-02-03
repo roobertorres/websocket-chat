@@ -3,12 +3,12 @@
         <template #content>
             <div class="field flex align-items-center justify-content-between">
                 <h3 class="m-0">Gerenciar amigos</h3>
-                <InputText v-if="amigos.getAmigos.length > 0" icon="pi pi-user" placeholder="Buscar usuário" size="small" />
+                <InputText v-if="useAmigosStore().getAmigos" icon="pi pi-user" placeholder="Buscar usuário" size="small" />
             </div>
-            <!-- <pre>{{ amigos.getAmigos }}</pre> -->
+            <pre>{{ useAmigosStore().getAmigos }}</pre>
             <div class="flex flex-column gap-3">
-                <template v-if="amigos.getAmigos.length > 0">
-                    <div v-for="amigo in amigos.getAmigos" :key="amigo.id_usuario"
+                <template v-if="useAmigosStore().getAmigos.length > 0">
+                    <div v-for="amigo in useAmigosStore().getAmigos" :key="amigo.id_usuario"
                         class="gap-2 border-2 surface-border border-round p-3 flex justify-content-between align-items-center">
                         <div class="flex flex-column gap-3">
 
@@ -47,10 +47,9 @@
 </template>
 
 <script setup>
-const amigos = useAmigosStore()
 
 onMounted(async () => {
-    await amigos.buscarAmigos()
+    await useAmigosStore().buscarAmigos()
 })
 
 const converterDataAmizade = (data) => {

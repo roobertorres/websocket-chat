@@ -18,8 +18,7 @@ requiredEnv.forEach((envVar) => {
 
 try {
     const db = require('./api/config/database.js') // Banco de dados
-}
-catch (err) {
+} catch (err) {
     console.error(err)
     process.exit(1)
 }

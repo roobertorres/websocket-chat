@@ -6,7 +6,7 @@ export const useChatsStore = defineStore('chatsStore', {
         buscandoChats: false,
     }),
     getters: {
-        getChats: state => state.chats,
+        getChats: state => Array.from(state.chats.values()),
         getNotificacoesChat: state => id_chat => {
             const chat = state.chats.get(id_chat)
             return chat ? chat.notificacoes : 0
@@ -38,8 +38,7 @@ export const useChatsStore = defineStore('chatsStore', {
 
             data.forEach(item => {
                 this.chats.set(item.id_chat, {
-                    id_chat: item.id_chat,
-                    nome_usuario: item.nome_usuario,
+                    ...item,
                     notificacoes: 0,
                 })
             })

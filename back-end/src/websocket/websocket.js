@@ -10,7 +10,8 @@ wss.on('connection', async (ws, req) => {
     const notifyFriendActivity = require('../api/functions/notificacoes/friendActivity.js')
 
     const parseCookies = cookieParser()
-    parseCookies(req, {}, () => { })
+    parseCookies(req, {}, () => {
+    })
 
     try {
         const id_usuario = await verificarJWT(req.cookies.token)
@@ -26,7 +27,6 @@ wss.on('connection', async (ws, req) => {
         }
     }
     catch (err) {
-        console.error('Token inválido: ', err)
         ws.send(JSON.stringify({ grupo: 'TOKEN_INVALIDO' }))
         return ws.close()
     }

@@ -4,7 +4,7 @@ const db = require('../config/database.js')
 // get dos chats do usuário que retorna o id do chat, nome do outro usuário
 
 router.get('/', async (req, res) => {
-    const {id_usuario} = req
+    const { id_usuario } = req
 
     try {
         const [chats] = await db.query(`
@@ -32,22 +32,23 @@ router.get('/', async (req, res) => {
         `, [id_usuario, id_usuario])
 
         res.send(chats)
-    } catch (err) {
+    }
+    catch (err) {
         console.error(err)
-        res.status(500).send({mensagem: 'Houve um erro ao buscar os chats'})
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar os chats' })
     }
 })
 
 
 router.post('/mensagens/:id_chat', async (req, res) => {
-    const {id_usuario} = req
-    const {id_chat} = req.params
-    const {texto_mensagem} = req.body
+    const { id_usuario } = req
+    const { id_chat } = req.params
+    const { texto_mensagem } = req.body
 
-    if (!id_chat || !texto_mensagem) return res.status(400).send({mensagem: 'Informe o id do chat e a mensagem'})
+    if (!id_chat || !texto_mensagem) return res.status(400).send({ mensagem: 'Informe o id do chat e a mensagem' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({mensagem: 'Chat não encontrado'})
+    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const data_hora_mensagem = new Date()
@@ -64,20 +65,21 @@ router.post('/mensagens/:id_chat', async (req, res) => {
             texto_mensagem,
             data_hora_mensagem,
         })
-    } catch (err) {
+    }
+    catch (err) {
         console.error(err)
-        res.status(500).send({mensagem: 'Houve um erro ao enviar a mensagem'})
+        res.status(500).send({ mensagem: 'Houve um erro ao enviar a mensagem' })
     }
 })
 
 router.get('/mensagens/ultima-mensagem/:id_chat', async (req, res) => {
-    const {id_usuario} = req
-    const {id_chat} = req.params
+    const { id_usuario } = req
+    const { id_chat } = req.params
 
-    if (!id_chat) return res.status(400).send({mensagem: 'Informe o id do chat'})
+    if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({mensagem: 'Chat não encontrado'})
+    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const [mensagem] = await db.execute(`
@@ -93,24 +95,35 @@ router.get('/mensagens/ultima-mensagem/:id_chat', async (req, res) => {
         `, [id_chat])
 
         res.send(mensagem)
-    } catch (err) {
+    }
+    catch (err) {
         console.error(err)
-        res.status(500).send({mensagem: 'Houve um erro ao buscar a última mensagem'})
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar a última mensagem' })
     }
 })
 
 router.get('/mensagens/:id_chat', async (req, res) => {
-    const {id_usuario} = req
-    const {id_chat} = req.params
+    const { id_usuario } = req
+    const { id_chat } = req.params
 
-    if (!id_chat) return res.status(400).send({mensagem: 'Informe o id do chat'})
+    if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({mensagem: 'Chat não encontrado'})
+    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const last = req.query?.last ? String(req.query.last) : null
         console.log('Último id', last)
+
+        const [total_messages] = await db.execute(`
+        SELECT
+            COUNT(id_mensagem) as total
+        FROM 
+            mensagem
+        WHERE
+            chat_mensagem = ?
+        `, [id_chat])
+        console.log('Total de mensagens', total_messages[0].total)
 
         const [mensagens] = await db.execute(`
             SELECT
@@ -126,20 +139,23 @@ router.get('/mensagens/:id_chat', async (req, res) => {
             AND
                 (
                 ? IS NULL
-                OR id_mensagem <= ?
+                OR
+                id_mensagem < ?
                 )
             ORDER BY
                 id_mensagem DESC
-            LIMIT 10
+            LIMIT
+                10
         `, [id_chat, last, last])
 
         const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
         limparNotificacoesChat(id_usuario, id_chat)
 
         res.send(mensagens)
-    } catch (err) {
+    }
+    catch (err) {
         console.error(err)
-        res.status(500).send({mensagem: 'Houve um erro ao buscar as mensagens'})
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar as mensagens' })
     }
 })
 

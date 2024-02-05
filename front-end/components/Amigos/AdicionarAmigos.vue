@@ -6,7 +6,8 @@
 			</div>
 			<form @submit.prevent="solicitarAmizade()">
 				<div class="flex gap-2">
-					<InputText id="adicionar-amigo-email" v-model="email" :class="{ 'p-invalid': erro }" :disabled="processando"
+					<InputText id="adicionar-amigo-email" v-model="email" :class="{ 'p-invalid': erro }"
+					           :disabled="processando"
 					           class="flex-1" maxlength="100" placeholder="E-mail do contato"
 					           required
 					           type="email"/>
@@ -22,7 +23,7 @@
 </template>
 
 <script setup>
-import {onBeforeUnmount} from 'vue';
+import { onBeforeUnmount } from 'vue';
 
 const email = ref('')
 const retorno = ref('')
@@ -30,8 +31,7 @@ const erro = ref(false)
 const processando = ref(false)
 
 const timeOut = () => setTimeout(() => {
-	retorno.value = '';
-	console.log('sumiu')
+	retorno.value = ''
 }, 5000)
 
 const solicitarAmizade = async () => {
@@ -46,7 +46,7 @@ const solicitarAmizade = async () => {
 			retorno.value = response.data.mensagem
 			email.value = ''
 			timeOut()
-			useSentFriendshipRequestsStore().fetchSentFriendshipRequests()
+			useSentFriendRequestsStore().fetchSentFriendRequests()
 		})
 		.catch((error) => {
 			console.error(error)

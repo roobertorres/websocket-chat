@@ -52,7 +52,7 @@
 <script setup>
 
 onMounted(async () => {
-	await useAmigosStore().buscarAmigos()
+	await useAmigosStore().fetchFriends()
 })
 
 const converterDataAmizade = (data) => {

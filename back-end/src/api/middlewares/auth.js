@@ -20,13 +20,13 @@ module.exports = async (req, res, next) => {
             req.email = payload.email
         }
         else {
-            res.status(401).send({mensagem: 'Token inválido'})
+            res.status(401).send({ mensagem: 'Token inválido' })
             return
         }
     } catch (err) {
         if (err.code) {
             console.error(err.code)
-            res.status(401).send({mensagem: 'Token inválido'})
+            res.status(401).send({ mensagem: 'Token inválido' })
             return
         }
     }

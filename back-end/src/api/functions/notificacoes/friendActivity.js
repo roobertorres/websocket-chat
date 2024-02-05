@@ -43,7 +43,6 @@ module.exports = async (id_usuario, status) => {
         try {
             const [status_atual] = await db.query(`SELECT status FROM usuario WHERE id_usuario = ?`, [id_usuario])
 
-
             await db.query('START TRANSACTION')
             await db.execute(`
                 UPDATE

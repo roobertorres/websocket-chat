@@ -10,7 +10,8 @@ module.exports = async (token) => {
 
         if (result.payload.id_usuario) {
             return result.payload.id_usuario
-        } else {
+        }
+        else {
             throw new Error('Token inválido')
         }
     } catch (err) {

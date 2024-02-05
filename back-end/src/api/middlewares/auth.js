@@ -3,14 +3,14 @@ const jose = require('jose')
 module.exports = async (req, res, next) => {
 
     if (!req.cookies.token) {
-        res.status(401).send({mensagem: 'Token não informado'})
+        res.status(401).send({ mensagem: 'Token não informado' })
         return
     }
 
     const secret = new TextEncoder().encode('batata')
 
     try {
-        const {payload} = await jose.jwtVerify(req.cookies.token?.replace('Bearer '), secret, {
+        const {payload} = await jose.jwtVerify(req.cookies.token, secret, {
             issuer: 'TORRES',
         })
 
@@ -18,7 +18,8 @@ module.exports = async (req, res, next) => {
             req.id_usuario = payload.id_usuario
             req.nome_usuario = payload.nome_usuario
             req.email = payload.email
-        } else {
+        }
+        else {
             res.status(401).send({mensagem: 'Token inválido'})
             return
         }

@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const db = require('../config/database.js')
+const notificacoes = require("../functions/notificacoes/novaMensagem");
 
 // get dos chats do usuário que retorna o id do chat, nome do outro usuário
 
@@ -53,7 +54,10 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     try {
         const data_hora_mensagem = new Date()
 
+        await db.query('START TRANSACTION')
         const [mensagem] = await db.execute('INSERT INTO mensagem (chat_mensagem, usuario_remetente, texto_mensagem, data_hora_mensagem) VALUES (?, ?, ?, ?)', [id_chat, id_usuario, texto_mensagem, data_hora_mensagem])
+        await db.execute('UPDATE chat SET count_messages = count_messages + 1 WHERE id_chat = ? ', [id_chat])
+        await db.query('COMMIT')
 
         const notificacoes = require('../functions/notificacoes/novaMensagem.js')
         notificacoes.notificarRemetente(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
@@ -68,6 +72,7 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     }
     catch (err) {
         console.error(err)
+        await db.query('ROLLBACK')
         res.status(500).send({ mensagem: 'Houve um erro ao enviar a mensagem' })
     }
 })
@@ -113,19 +118,18 @@ router.get('/mensagens/:id_chat', async (req, res) => {
 
     try {
         const last = req.query?.last ? String(req.query.last) : null
-        console.log('Último id', last)
 
         const [total_messages] = await db.execute(`
         SELECT
-            COUNT(id_mensagem) as total
-        FROM 
-            mensagem
+            count_messages
+        FROM
+            chat
         WHERE
-            chat_mensagem = ?
+            id_chat = ?
         `, [id_chat])
-        console.log('Total de mensagens', total_messages[0].total)
+        console.log('Total de mensagens', total_messages[0].count_messages)
 
-        const [mensagens] = await db.execute(`
+        const [messages] = await db.execute(`
             SELECT
                 id_mensagem,
                 usuario_remetente,
@@ -145,13 +149,14 @@ router.get('/mensagens/:id_chat', async (req, res) => {
             ORDER BY
                 id_mensagem DESC
             LIMIT
-                10
+                1
         `, [id_chat, last, last])
 
         const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
         limparNotificacoesChat(id_usuario, id_chat)
 
-        res.send(mensagens)
+        res.setHeader('x-total-count', total_messages[0].count_messages || 0)
+        res.send(messages)
     }
     catch (err) {
         console.error(err)

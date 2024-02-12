@@ -5,13 +5,19 @@ export const useMensagensStore = defineStore('mensagensStore', {
     state: () => ({
         mensagens: new Map(),
         buscandoMensagens: false,
+        totalMessagesDB: 0,
     }),
     getters: {
-        // retornar mensagens ordenadas pelo id asc
-        getMensagens: state => state.mensagens,
+        getMensagens: state => Array.from(state.mensagens.values()),
         getMensagem: state => id_mensagem => state.mensagens.get(id_mensagem),
+        getMessagesCount: state => state.mensagens.size,
+        getMessagesCountDB: state => state.totalMessagesDB,
     },
     actions: {
+        clearMessages() {
+            this.mensagens.clear()
+            this.totalMessagesDB = 0
+        },
         adicionarMensagem(id_mensagem, mensagem) {
             this.mensagens.set(id_mensagem, mensagem)
             this.mensagens = new Map([...this.mensagens.entries()].sort((a, b) => a[0] - b[0]))
@@ -27,29 +33,42 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 console.error(error)
                 if (error.response) {
                     useNuxtApp().$toast.removeAllGroups()
-                    useNuxtApp().$toast.add({ severity: 'info', summary: 'Oops!', detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível' })
+                    useNuxtApp().$toast.add({
+                        severity: 'info',
+                        summary: 'Oops!',
+                        detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível'
+                    })
                 }
             }
         },
-        async fetchLastMessageID(id_chat) {
-            const { data } = await axios.get(`/chat/mensagens/ultima-mensagem/${id_chat}`)
-            return data.id_mensagem
-        },
-        async buscarMensagens(id_chat) {
-            this.mensagens.clear()
+        async buscarMensagens(id_chat = useRoute().params.id) {
             this.buscandoMensagens = true
 
-            const id_ultima_mensagem = this.mensagens ? this.mensagens.get(this.mensagens.size - 1)?.id_mensagem : await this.fetchLastMessageID(id_chat)
+            let last_id = this.getMensagens[0]?.id_mensagem || null
+            console.log('Último id: ', last_id)
 
-            const { data } = await axios.get(`/chat/mensagens/${id_chat}`, {
-                params: {
-                    last: id_ultima_mensagem
-                }
-            })
+            try {
+                const response = await axios.get(`/chat/mensagens/${id_chat}`, {
+                    params: {
+                        last: last_id
+                    }
+                })
 
-            data.forEach(item => {
-                this.adicionarMensagem(item.id_mensagem, item)
-            })
+                response.data.forEach(item => {
+                    this.adicionarMensagem(item.id_mensagem, item)
+                })
+
+                this.totalMessagesDB = Number(response.headers['x-total-count'])
+            }
+            catch (err) {
+                console.error(err)
+                useNuxtApp().$toast.removeAllGroups()
+                useNuxtApp().$toast.add({
+                    severity: 'warn',
+                    summary: 'Oops!',
+                    detail: 'Não conseguimos buscar as mensagens no momento. Tente novamente mais tarde.',
+                })
+            }
 
             this.buscandoMensagens = false
         }

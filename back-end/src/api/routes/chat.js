@@ -142,18 +142,22 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 chat_mensagem = ?
             AND
                 (
-                ? IS NULL
-                OR
-                id_mensagem < ?
+                    ? IS NULL
+                    OR
+                    id_mensagem < ?
                 )
             ORDER BY
                 id_mensagem DESC
             LIMIT
-                1
+                100
         `, [id_chat, last, last])
 
-        const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
-        limparNotificacoesChat(id_usuario, id_chat)
+        const { clear_notifications } = req.query
+
+        if (clear_notifications === true) {
+            const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
+            limparNotificacoesChat(id_usuario, id_chat)
+        }
 
         res.setHeader('x-total-count', total_messages[0].count_messages || 0)
         res.send(messages)
@@ -161,6 +165,37 @@ router.get('/mensagens/:id_chat', async (req, res) => {
     catch (err) {
         console.error(err)
         res.status(500).send({ mensagem: 'Houve um erro ao buscar as mensagens' })
+    }
+})
+
+router.get('/participantes/:id_chat', async (req, res) => {
+    const { id_usuario } = req
+    const { id_chat } = req.params
+
+    if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
+
+    const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
+    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
+
+    try {
+        const [participantes] = await db.query(`
+            SELECT
+                id_usuario,
+                nome_usuario,
+                email
+            FROM
+                usuario
+            JOIN
+                participante_chat ON id_usuario = usuario_participante
+            WHERE
+                chat_participante = ?
+        `, [id_chat])
+
+        res.send(participantes)
+    }
+    catch (err) {
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao buscar os participantes do chat' })
     }
 })
 

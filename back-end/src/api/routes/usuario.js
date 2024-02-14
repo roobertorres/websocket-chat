@@ -277,7 +277,7 @@ router.get('/dados', async (req, res) => {
     const { id_usuario } = req
 
     try {
-        const [usuario] = await db.query('SELECT nome_usuario, email, status, data_cadastro FROM usuario WHERE id_usuario = ?', [id_usuario])
+        const [usuario] = await db.query('SELECT id_usuario, nome_usuario, email, status, data_cadastro FROM usuario WHERE id_usuario = ?', [id_usuario])
         res.send(usuario[0])
     }
     catch (err) {

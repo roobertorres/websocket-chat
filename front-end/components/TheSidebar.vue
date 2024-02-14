@@ -1,7 +1,7 @@
 <template>
 	<div class="the-sidebar w-18rem flex surface-0 p-3">
-		<div class="flex-1 flex flex-column justify-content-between w-full">
-			<div class="flex flex-column gap-3">
+		<div class="flex-1 flex flex-column justify-content-between w-full gap-3">
+			<div class="flex flex-column gap-3 flex-1" style="overflow: hidden">
 				<div class="sidebar-header flex flex-column gap-1">
 					<h3 class="m-0 text-center">WS Chat</h3>
 				</div>
@@ -12,10 +12,10 @@
 						<SidebarAmigosLink/>
 					</div>
 				</div>
-				<div class="flex flex-column gap-2">
+				<div class="flex flex-column gap-2 flex-1" style="overflow: hidden">
 					<small>Chats</small>
 					<hr style="border-color: var(--surface-0); width: 100%" class="m-0">
-					<div class="link-group">
+					<div class="link-group" style="overflow: auto">
 						<SidebarChatsList/>
 					</div>
 				</div>
@@ -32,6 +32,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: .5rem;
+		padding-right: .5rem;
 
 		.sidebar-link {
 			cursor: pointer;
@@ -46,6 +47,23 @@
 				border-left: 5px solid var(--surface-300);
 			}
 		}
+
+		&::-webkit-scrollbar-track {
+			background-color: var(--surface-50);
+
+			border-radius: 5px;
+		}
+
+		&::-webkit-scrollbar {
+			width: 5px;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			border-radius: 10px;
+			background-color: var(--surface-200);
+		}
 	}
 }
 </style>
+<script setup>
+</script>

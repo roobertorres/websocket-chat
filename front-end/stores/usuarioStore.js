@@ -6,7 +6,7 @@ export const useUsuarioStore = defineStore('usuarioStore', {
     }),
     getters: {
         getUsuario: (state) => state.usuario,
-        getNomeUsuario: (state) => state.usuario?.nome_usuario,
+        getNomeUsuario: (state) => state.usuario?.nome_usuario || '?',
         getUsuarioEmail: (state) => state.usuario?.email,
         getUsuarioId: (state) => state.usuario?.id_usuario,
         getUsuarioDataCadastro: (state) => state.usuario?.data_cadastro,

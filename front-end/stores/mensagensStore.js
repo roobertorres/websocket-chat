@@ -3,11 +3,13 @@ import axios from '../custom/axios_instance.js'
 // Store de mensagens para o chat atualmente aberto
 export const useMensagensStore = defineStore('mensagensStore', {
     state: () => ({
+        chatParticipants: new Map(),
         mensagens: new Map(),
         buscandoMensagens: false,
         totalMessagesDB: 0,
     }),
     getters: {
+        getChatParticipant: state => id_usuario => state.chatParticipants.get(id_usuario),
         getMensagens: state => Array.from(state.mensagens.values()),
         getMensagem: state => id_mensagem => state.mensagens.get(id_mensagem),
         getMessagesCount: state => state.mensagens.size,
@@ -30,27 +32,20 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 return data
             }
             catch (error) {
-                console.error(error)
-                if (error.response) {
-                    useNuxtApp().$toast.removeAllGroups()
-                    useNuxtApp().$toast.add({
-                        severity: 'info',
-                        summary: 'Oops!',
-                        detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível'
-                    })
-                }
+                throw new Error(error)
             }
         },
-        async buscarMensagens(id_chat = useRoute().params.id) {
+        async buscarMensagens(clear_notifications = false) {
+            const id_chat = useRoute().params.id
             this.buscandoMensagens = true
 
             let last_id = this.getMensagens[0]?.id_mensagem || null
-            console.log('Último id: ', last_id)
 
             try {
                 const response = await axios.get(`/chat/mensagens/${id_chat}`, {
                     params: {
-                        last: last_id
+                        last: last_id,
+                        clear_notifications,
                     }
                 })
 
@@ -71,6 +66,24 @@ export const useMensagensStore = defineStore('mensagensStore', {
             }
 
             this.buscandoMensagens = false
+        },
+        async fetchChat() {
+            this.mensagens.clear()
+
+            this.buscarMensagens(true)
+
+            const id_chat = useRoute().params.id
+
+            try {
+                const { data } = await axios.get(`/chat/participantes/${id_chat}`)
+                this.chatParticipants.clear()
+                data.forEach(participant => {
+                    this.chatParticipants.set(participant.id_usuario, participant)
+                })
+            }
+            catch (error) {
+                console.error(error)
+            }
         }
     }
 })

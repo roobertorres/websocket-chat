@@ -10,7 +10,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<Dialog :visible="!useWebsocketStore().isConnected" modal position="bottom" :closable="false"
+	<Dialog :visible="!useWebsocketStore().isConnected" modal position="bottom"
+	        :closable="false"
 	        :showHeader="false"
 	        :draggable="false"
 	        :resizable="false">

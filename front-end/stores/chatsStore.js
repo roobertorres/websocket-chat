@@ -3,6 +3,7 @@ import axios from '../custom/axios_instance.js'
 export const useChatsStore = defineStore('chatsStore', {
     state: () => ({
         chats: new Map(),
+        chatUsers: new Map(),
         buscandoChats: false,
     }),
     getters: {
@@ -40,6 +41,11 @@ export const useChatsStore = defineStore('chatsStore', {
                 this.chats.set(item.id_chat, {
                     ...item,
                     notificacoes: 0,
+                })
+
+                this.chatUsers.set(item.id_usuario, {
+                    id_usuario: item.id_usuario,
+                    nome_usuario: item.nome_usuario,
                 })
             })
 

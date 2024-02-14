@@ -1,48 +1,46 @@
 <template>
-	<div class="chat-messages flex-1 flex flex-column" style="overflow: auto; min-height: 0" id="mensagensContainer"
+	<div class="chat-messages flex-1 flex" style="overflow: auto; min-height: 0" id="mensagensContainer"
 	     ref="mensagensContainer">
-		<ProgressSpinner v-if="mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB" mode="indeterminate"
-		                 style="height: 2.5rem"/>
-		<template v-if="mensagensStore.getMessagesCount > 0">
-			<!--			<div>-->
-			<!--				<p>Mensagens no front: {{ mensagensStore.getMessagesCount }}</p>-->
-			<!--				<p>Mensagens no banco: {{ mensagensStore.getMessagesCountDB }}</p>-->
-			<!--				&lt;!&ndash;				<pre>{{ mensagensStore.getMensagens }}</pre>&ndash;&gt;-->
-			<!--				<Divider class="mb-1"/>-->
-			<!--			</div>-->
-			<div class="flex flex-column">
-				<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
-					<div class="flex gap-3 align-items-start"
-					     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
-					     :class="{ 'mt-5': !mensagemAnteriorMesmoRemetente(mensagem) }">
-						<Avatar v-show="!mensagemAnteriorMesmoRemetente(mensagem)"
-						        :label="mensagem.nome_usuario_remetente?.charAt(0) || '?'" shape="circle"
-						        size="normal"/>
-						<div>
-							<div v-if="!mensagemAnteriorMesmoRemetente(mensagem)"
-							     class="flex gap-2 align-items-center">
-								<p class="m-0">
-									<b>{{ mensagem.nome_usuario_remetente || 'Usuário desconhecido' }}</b>
-								</p>
-								<small style="color: darkgray">
-									{{ converterDataHorario(mensagem.data_hora_mensagem) }}
-								</small>
-							</div>
-							<div class="messages-minute mt-1 flex flex-column">
-								<p class="m-0" :class="{ 'ml-6': mensagemAnteriorMesmoRemetente(mensagem) }">
-									<template v-if="!mensagem.excluida">
-										{{ mensagem.texto_mensagem }}
-									</template>
-									<template v-else>
-										<i>Esta mensagem foi excluída</i>
-									</template>
-								</p>
-							</div>
+		<div class="messages-container flex flex-column">
+			<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
+				<div class="flex gap-3 align-items-start"
+				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
+				     :class="{ 'mt-5': !mensagemAnteriorMesmoRemetente(mensagem) &&  mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB}">
+					<Avatar v-show="!mensagemAnteriorMesmoRemetente(mensagem)"
+					        :label="mensagem.nome_usuario_remetente?.charAt(0) || '?'" shape="circle"
+					        size="normal"/>
+					<div>
+						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem)"
+						     class="flex gap-2 align-items-center">
+							<p class="m-0">
+								<b>{{ remetentUserName(mensagem.usuario_remetente) }}</b>
+							</p>
+							<small style="color: darkgray">
+								{{ converterDataHorario(mensagem.data_hora_mensagem) }}
+							</small>
+						</div>
+						<div class="messages-minute mt-1 flex flex-column">
+							<p class="m-0" :class="{ 'ml-6': mensagemAnteriorMesmoRemetente(mensagem) }">
+								<template v-if="!mensagem.excluida">
+									{{ mensagem.texto_mensagem }}
+								</template>
+								<template v-else>
+									<i>Esta mensagem foi excluída</i>
+								</template>
+							</p>
 						</div>
 					</div>
-				</template>
-			</div>
-		</template>
+				</div>
+			</template>
+		</div>
+		<Button v-if="buttonFetchMessagesVisible"
+		        :label="mensagensStore.buscandoMensagens ? 'Buscando...' : 'Carregar mais'" class="w-2 m-auto"
+		        :loading="mensagensStore.buscandoMensagens"
+		        @click="mensagensStore.buscarMensagens()" size="small" text/>
+		<div v-else-if="mensagensStore.buscandoMensagens">
+			<h3>Este é o início desta conversa.</h3>
+			<Divider/>
+		</div>
 	</div>
 </template>
 
@@ -50,42 +48,59 @@
 const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
-onBeforeUnmount(() => {
-	mensagensStore.clearMessages()
-	mensagensContainer.value.removeEventListener('scroll', handleScroll())
-})
+const remetentUserName = (id) => {
+	const user = useChatsStore().chatUsers.get(id)
 
-const handleScroll = async () => {
-	if (mensagensContainer.value.scrollTop === 0 && !mensagensStore.buscandoMensagens) {
-		await mensagensStore.buscarMensagens()
+	if (user) {
+		return user.nome_usuario
+	}
+	else if (id === useUsuarioStore().getUsuarioId) {
+		return useUsuarioStore().getNomeUsuario
+	}
+	else {
+		return useUsuarioStore().getUsuarioId
 	}
 }
 
+const buttonFetchMessagesVisible = computed(() => {
+	return mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB || (mensagensStore.getMessagesCount === 0 && !mensagensStore.buscandoMensagens)
+})
+
 onMounted(async () => {
-	mensagensStore.clearMessages()
-	await mensagensStore.buscarMensagens()
+	await mensagensStore.fetchChat()
 	await nextTick()
 
-	while ((!(mensagensContainer.value.scrollHeight - 50 > mensagensContainer.value.clientHeight)) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
+	while ((!(mensagensContainer.value.scrollHeight - 200 > mensagensContainer.value.clientHeight)) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
 		await mensagensStore.buscarMensagens()
-		// await new Promise(resolve => setTimeout(resolve, 1000))
 	}
-
-	mensagensContainer.value.scrollTop = mensagensContainer.value.scrollHeight
 
 	mensagensContainer.value.addEventListener('scroll', handleScroll)
 })
 
-const fetchMessages = async () => {
-	return await mensagensStore.buscarMensagens(useRoute().params.id)
+onBeforeUnmount(() => {
+	mensagensContainer.value.removeEventListener('scroll', handleScroll())
+})
+
+const handleScroll = async () => {
+	if (!mensagensStore.buscandoMensagens) {
+		if ((mensagensContainer.value.clientHeight + (mensagensContainer.value.scrollTop * -1) >= mensagensContainer.value.scrollHeight - 200) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
+			await mensagensStore.buscarMensagens()
+			await handleScroll()
+		}
+	}
 }
 
 const mensagemAnteriorMesmoRemetente = (mensagem) => {
 	const mensagem_anterior = {
 		...mensagensStore.getMensagem(mensagem.id_mensagem - 1)
 	}
-	return mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
-	// return `Remetente mensagem anterior: ${mensagem_anterior.usuario_remetente} | Remetente mensagem atual: ${mensagem.usuario_remetente}`
+
+	const horario_mensagem_anterior = new Date(mensagem_anterior.data_hora_mensagem).getTime()
+	const horario_mensagem = new Date(mensagem.data_hora_mensagem).getTime()
+	
+	const same_user = mensagem_anterior && mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
+
+	return same_minute && same_user
 }
 
 const converterDataHorario = (data_hora) => {
@@ -105,13 +120,14 @@ const converterDataHorario = (data_hora) => {
 
 watch(() => mensagensStore.getMensagens, async () => {
 	await nextTick()
-	// mensagensContainer.value.scrollTop = mensagensContainer.value.scrollHeight
+	// mensagensContainer.value.scrollBottom = mensagensContainer.value.scrollHeight
 })
 </script>
 
 <style scoped>
 .chat-messages {
 	padding-right: 1rem;
+	flex-direction: column-reverse;
 
 	&::-webkit-scrollbar-track {
 		background-color: var(--surface-200);

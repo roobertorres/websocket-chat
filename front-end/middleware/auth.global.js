@@ -16,5 +16,11 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
             if (await useUsuarioStore().buscarUsuario()) return
             return navigateTo('/login')
         }
+        else {
+            if (!to.path.includes('chat') && from.path.includes('chat')) {
+                useMensagensStore().clearMessages()
+                return
+            }
+        }
     }
 })

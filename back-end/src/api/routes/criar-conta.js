@@ -17,17 +17,20 @@ module.exports = async (req, res) => {
             return
         }
 
-        await db.execute('INSERT INTO usuario (nome_usuario, email, senha) VALUES (?, ?, ?)',
-            [nome, email, hash])
+        await db.execute('INSERT INTO usuario (nome_usuario, email, senha, data_cadastro) VALUES (?, ?, ?, ?)',
+            [nome, email, hash, new Date()])
 
             .then(async ([results]) => {
                 const jwt = await gerarJWT(results.insertId)
 
                 if (!jwt) return res.status(500).send({ mensagem: 'Houve um erro ao gerar o token' })
 
+                res.cookie('token', String(jwt), {
+                    httpOnly: true,
+                })
+
                 res.status(201).send({
                     mensagem: 'Sua conta foi criada',
-                    token: jwt
                 })
             })
             .catch(err => {

@@ -7,10 +7,10 @@ module.exports = async (req, res, next) => {
         return
     }
 
-    const secret = new TextEncoder().encode('batata')
+    const secret = new TextEncoder().encode(process.env.JWT_ENCODE_KEY)
 
     try {
-        const {payload} = await jose.jwtVerify(req.cookies.token, secret, {
+        const { payload } = await jose.jwtVerify(req.cookies.token, secret, {
             issuer: 'TORRES',
         })
 
@@ -23,7 +23,8 @@ module.exports = async (req, res, next) => {
             res.status(401).send({ mensagem: 'Token inválido' })
             return
         }
-    } catch (err) {
+    }
+    catch (err) {
         if (err.code) {
             console.error(err.code)
             res.status(401).send({ mensagem: 'Token inválido' })

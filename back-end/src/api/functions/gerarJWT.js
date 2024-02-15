@@ -1,7 +1,7 @@
 const jose = require('jose')
 
 module.exports = async function gerarJWT(usuario) {
-    const secret = new TextEncoder().encode('batata')
+    const secret = new TextEncoder().encode(process.env.JWT_ENCODE_KEY)
     const alg = 'HS256'
 
     const jwt = await new jose.SignJWT({

@@ -1,7 +1,7 @@
 const jose = require('jose')
 
 module.exports = async (token) => {
-    const secret = new TextEncoder().encode('batata')
+    const secret = new TextEncoder().encode(process.env.JWT_ENCODE_KEY)
 
     try {
         const result = await jose.jwtVerify(token, secret, {
@@ -14,7 +14,8 @@ module.exports = async (token) => {
         else {
             throw new Error('Token inválido')
         }
-    } catch (err) {
+    }
+    catch (err) {
         if (err.code) {
             console.error(err.code)
             throw new Error('Token inválido')

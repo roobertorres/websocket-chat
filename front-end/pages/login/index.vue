@@ -16,7 +16,7 @@
 					<small class="p-error">{{ mensagem_erro }}</small>
 				</div>
 				<Button label="Fazer login" class="w-full field" type="submit" :loading="processando"/>
-				<CriarConta/>
+				<LoginCriarConta/>
 			</fieldset>
 		</form>
 	</div>

@@ -1,47 +1,71 @@
 const { clients } = require('../../../websocket/websocket.js')
 const db = require('../../config/database.js')
 
-module.exports = async function notificarNovaSolicitacao(id) {
+async function notificarSolicitacaoCancelada(id) {
+    const solicitacao = await buscarSolicitacoes(id)
 
-    const [solicitacao] = await buscarSolicitacoes(id)
-    if (solicitacao.length === 0) return
-
-    const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao[0]
-
-    notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ENVIADA', solicitacao)
-    notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'NOVO', solicitacao)
+    if (solicitacao) {
+        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'CANCELAR_ENVIADA', solicitacao)
+        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'CANCELAR_RECEBIDA', solicitacao)
+    }
 }
 
-module.exports = async function notificarSolicitacaoRecusada(id) {
+async function notificarNovaSolicitacao(id) {
 
-    const [solicitacao] = await buscarSolicitacoes(id)
-    if (solicitacao.length === 0) return
-
-    const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao[0]
-    notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'RECUSADA', solicitacao)
-    notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECUSOU', solicitacao)
+    const solicitacao = await buscarSolicitacoes(id)
+    if (solicitacao) {
+        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ENVIADA', solicitacao)
+        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECEBIDA', solicitacao)
+    }
 }
 
-module.exports = async function notificarSolicitacaoAceita(id) {
+async function notificarSolicitacaoRecusada(id) {
 
-    const [solicitacao] = await buscarSolicitacoes(id)
-    if (solicitacao.length === 0) return
+    const solicitacao = await buscarSolicitacoes(id)
+    if (solicitacao) {
+        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'RECUSADA', solicitacao)
+        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECUSOU', solicitacao)
+    }
+}
 
-    const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao[0]
-    notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ACEITA', solicitacao)
-    notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'ACEITOU', solicitacao)
+async function notificarSolicitacaoAceita(id) {
+
+    const solicitacao = await buscarSolicitacoes(id)
+    if (solicitacao) {
+        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ACEITA', solicitacao)
+        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'ACEITOU', solicitacao)
+    }
+}
+
+
+module.exports = {
+    notificarNovaSolicitacao,
+    notificarSolicitacaoRecusada,
+    notificarSolicitacaoAceita,
+    notificarSolicitacaoCancelada
 }
 
 function notificarUsuario(id, grupo, tipo, solicitacao) {
     const ws = clients.get(id)
 
     if (ws) {
+
         ws.forEach((conexao) => {
             if (conexao) {
                 conexao.send(JSON.stringify({
                     grupo,
                     tipo,
-                    solicitacao,
+                    solicitacao: {
+                        id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
+                        nome_usuario_solicitante: solicitacao.nome_usuario_solicitante,
+                        email_usuario_solicitante: solicitacao.email_usuario_solicitante,
+                        nome_usuario_solicitado: solicitacao.nome_usuario_solicitado,
+                        email_usuario_solicitado: solicitacao.email_usuario_solicitado,
+                    },
                 }))
             }
         })
@@ -49,14 +73,16 @@ function notificarUsuario(id, grupo, tipo, solicitacao) {
 }
 
 async function buscarSolicitacoes(id) {
-    return await db.query(
+    const [result] = await db.query(
         `
     SELECT
         id_solicitacao_amizade,
         usuario_solicitante.id_usuario AS id_usuario_solicitante,
         usuario_solicitante.nome_usuario AS nome_usuario_solicitante,
+        usuario_solicitante.email AS email_usuario_solicitante,
         usuario_solicitado.id_usuario AS id_usuario_solicitado,
-        usuario_solicitado.nome_usuario AS usuario_solicitado_nome
+        usuario_solicitado.nome_usuario AS nome_usuario_solicitado,
+        usuario_solicitado.email AS email_usuario_solicitado
     FROM
         solicitacao_amizade
     INNER JOIN
@@ -67,4 +93,7 @@ async function buscarSolicitacoes(id) {
         id_solicitacao_amizade = ?
         `,
         [id])
+    console.log(result)
+
+    return result
 }

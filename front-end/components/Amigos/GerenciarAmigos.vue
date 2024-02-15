@@ -6,7 +6,7 @@
 				<InputText v-if="useAmigosStore().getAmigos" icon="pi pi-user" placeholder="Buscar usuário"
 				           size="small"/>
 			</div>
-			<pre>{{ useAmigosStore().getAmigos }}</pre>
+			<!--			<pre>{{ useAmigosStore().getAmigos }}</pre>-->
 			<div class="flex flex-column gap-3">
 				<template v-if="useAmigosStore().getAmigos.length > 0">
 					<div v-for="amigo in useAmigosStore().getAmigos" :key="amigo.id_usuario"

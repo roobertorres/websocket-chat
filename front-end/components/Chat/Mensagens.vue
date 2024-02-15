@@ -5,7 +5,7 @@
 			<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
 				<div class="flex gap-3 align-items-start"
 				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
-				     :class="{ 'mt-5': !mensagemAnteriorMesmoRemetente(mensagem) &&  mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB}">
+				     :class="{ 'mt-4': !mensagemAnteriorMesmoRemetente(mensagem) &&  mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB}">
 					<Avatar v-show="!mensagemAnteriorMesmoRemetente(mensagem)"
 					        :label="mensagem.nome_usuario_remetente?.charAt(0) || '?'" shape="circle"
 					        size="normal"/>
@@ -30,6 +30,7 @@
 							</p>
 						</div>
 					</div>
+					<!--					<small>Tempo desde a última mensagem: {{ timeBetweenMessages(mensagem) }}</small>-->
 				</div>
 			</template>
 		</div>
@@ -37,7 +38,7 @@
 		        :label="mensagensStore.buscandoMensagens ? 'Buscando...' : 'Carregar mais'" class="w-2 m-auto"
 		        :loading="mensagensStore.buscandoMensagens"
 		        @click="mensagensStore.buscarMensagens()" size="small" text/>
-		<div v-else-if="mensagensStore.buscandoMensagens">
+		<div v-else-if="!mensagensStore.buscandoMensagens">
 			<h3>Este é o início desta conversa.</h3>
 			<Divider/>
 		</div>
@@ -63,7 +64,7 @@ const remetentUserName = (id) => {
 }
 
 const buttonFetchMessagesVisible = computed(() => {
-	return mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB || (mensagensStore.getMessagesCount === 0 && !mensagensStore.buscandoMensagens)
+	return mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB || (mensagensStore.getMessagesCount === 0 && mensagensStore.buscandoMensagens)
 })
 
 onMounted(async () => {
@@ -96,8 +97,9 @@ const mensagemAnteriorMesmoRemetente = (mensagem) => {
 	}
 
 	const horario_mensagem_anterior = new Date(mensagem_anterior.data_hora_mensagem).getTime()
-	const horario_mensagem = new Date(mensagem.data_hora_mensagem).getTime()
-	
+	const horario_mensagem_atual = new Date(mensagem.data_hora_mensagem).getTime()
+
+	const same_minute = Number(((horario_mensagem_atual - horario_mensagem_anterior) / 1000 / 60).toFixed(0)) === 0
 	const same_user = mensagem_anterior && mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
 
 	return same_minute && same_user

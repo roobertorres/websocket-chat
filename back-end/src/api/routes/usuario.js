@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const db = require('../config/database.js')
+const notificacoesSolicitacaoAmizade = require('../functions/notificacoes/solicitacaoAmizade.js')
 
 router.get('/amigos', async (req, res) => {
     const { id_usuario } = req
@@ -119,9 +120,15 @@ router.post('/solicitacao-amizade/recusar/:id_solicitacao_amizade', async (req, 
 
         await db.query('START TRANSACTION')
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 0 WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
-
         await db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade recusada' })
+
+        try {
+            notificacoesSolicitacaoAmizade.notificarSolicitacaoRecusada(id_solicitacao_amizade)
+        }
+        catch (error) {
+            console.error('Erro ao notificar solicitação de amizade recusada: ', error)
+        }
     }
     catch (err) {
         await db.query('ROLLBACK')
@@ -139,7 +146,6 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
         if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
 
         await db.query('START TRANSACTION')
-
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ? WHERE id_solicitacao_amizade = ?', [new Date(), id_solicitacao_amizade])
 
         // Verificar se já existe um chat privado entre os usuários
@@ -155,6 +161,13 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
 
         await db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade aceita' })
+
+        try {
+            notificacoesSolicitacaoAmizade.notificarSolicitacaoAceita(id_solicitacao_amizade)
+        }
+        catch (error) {
+            console.error('Erro ao notificar solicitação de amizade aceita: ', error)
+        }
     }
     catch (err) {
         await db.query('ROLLBACK')
@@ -171,10 +184,21 @@ router.delete('/solicitacoes-amizade/cancelar/:id_solicitacao_amizade', async (r
         const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitante = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
         if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
 
+        await db.query('START TRANSACTION')
         await db.execute('DELETE FROM solicitacao_amizade WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
         res.send({ mensagem: 'Solicitação de amizade cancelada' })
+
+        try {
+            await notificacoesSolicitacaoAmizade.notificarSolicitacaoCancelada(id_solicitacao_amizade)
+        }
+        catch (error) {
+            console.error('Erro ao notificar solicitação de amizade cancelada: ', error)
+        }
+        
+        await db.query('COMMIT')
     }
     catch (err) {
+        await db.query('ROLLBACK')
         console.error(err)
         res.status(500).send({ mensagem: 'Houve um erro ao cancelar a solicitação de amizade' })
     }
@@ -189,7 +213,7 @@ router.get('/solicitacoes-amizade/enviadas', async (req, res) => {
         res.send(solicitacoes_enviadas.map(solicitacao => {
             return {
                 id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
-                nome_usuario: solicitacao.nome_usuario,
+                nome_usuario_solicitado: solicitacao.nome_usuario,
                 email: solicitacao.email
             }
         }))
@@ -208,7 +232,7 @@ router.get('/solicitacoes-amizade', async (req, res) => {
         res.send(solicitacoes.map(solicitacao => {
             return {
                 id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
-                nome_usuario: solicitacao.nome_usuario,
+                nome_usuario_solicitante: solicitacao.nome_usuario,
                 email: solicitacao.email
             }
         }))
@@ -259,12 +283,15 @@ router.post('/solicitar-amizade', async (req, res) => {
     try {
         await db.query('START TRANSACTION')
         const [result] = await db.execute('INSERT INTO solicitacao_amizade (usuario_solicitante, usuario_solicitado) VALUES (?, ?)', [id_usuario, usuario[0].id_usuario])
-
-        const notificarSolicitacaoAmizade = require('../functions/notificacoes/solicitacaoAmizade.js')
-        notificarSolicitacaoAmizade(result.insertId)
-
         await db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade enviada.' })
+
+        try {
+            notificacoesSolicitacaoAmizade.notificarNovaSolicitacao(result.insertId)
+        }
+        catch (error) {
+            console.error('Erro ao notificar nova solicitação de amizade: ', error)
+        }
     }
     catch (err) {
         await db.query('ROLLBACK')

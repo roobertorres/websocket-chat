@@ -56,7 +56,15 @@ router.post('/mensagens/:id_chat', async (req, res) => {
 
         await db.query('START TRANSACTION')
         const [mensagem] = await db.execute('INSERT INTO mensagem (chat_mensagem, usuario_remetente, texto_mensagem, data_hora_mensagem) VALUES (?, ?, ?, ?)', [id_chat, id_usuario, texto_mensagem, data_hora_mensagem])
+
+        // Atualizar o número total de mensagens do chat
         await db.execute('UPDATE chat SET count_messages = count_messages + 1 WHERE id_chat = ? ', [id_chat])
+
+        // Atualizar o id da última mensagem do chat
+        await db.execute('UPDATE chat SET last_message_id = ? WHERE id_chat = ? ', [mensagem.insertId, id_chat])
+
+        // Atualizar o número de mensagens não lidas
+        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = mensagens_nao_lidas + 1 WHERE chat_participante = ? AND usuario_participante != ?', [id_chat, id_usuario])
         await db.query('COMMIT')
 
         const notificacoes = require('../functions/notificacoes/novaMensagem.js')
@@ -74,36 +82,6 @@ router.post('/mensagens/:id_chat', async (req, res) => {
         console.error(err)
         await db.query('ROLLBACK')
         res.status(500).send({ mensagem: 'Houve um erro ao enviar a mensagem' })
-    }
-})
-
-router.get('/mensagens/ultima-mensagem/:id_chat', async (req, res) => {
-    const { id_usuario } = req
-    const { id_chat } = req.params
-
-    if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
-
-    const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
-
-    try {
-        const [mensagem] = await db.execute(`
-            SELECT
-                id_mensagem
-            FROM
-                mensagem
-            WHERE
-                chat_mensagem = ?
-            ORDER BY
-                id_mensagem DESC
-            LIMIT 1
-        `, [id_chat])
-
-        res.send(mensagem)
-    }
-    catch (err) {
-        console.error(err)
-        res.status(500).send({ mensagem: 'Houve um erro ao buscar a última mensagem' })
     }
 })
 
@@ -149,7 +127,7 @@ router.get('/mensagens/:id_chat', async (req, res) => {
             ORDER BY
                 id_mensagem DESC
             LIMIT
-                100
+                50
         `, [id_chat, last, last])
 
         const { clear_notifications } = req.query
@@ -158,6 +136,8 @@ router.get('/mensagens/:id_chat', async (req, res) => {
             const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
             limparNotificacoesChat(id_usuario, id_chat)
         }
+
+        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = 0 WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
 
         res.setHeader('x-total-count', total_messages[0].count_messages || 0)
         res.send(messages)

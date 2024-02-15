@@ -18,5 +18,8 @@ export const useAmigosStore = defineStore('amigosStore', {
             const amigo = this.amigos.get(id)
             if (amigo) amigo.status = status
         },
+        addFriend(friend) {
+            this.amigos.set(friend.id_usuario, friend)
+        }
     }
 })

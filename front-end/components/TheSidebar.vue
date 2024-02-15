@@ -18,6 +18,9 @@
 					<div class="link-group" style="overflow: auto">
 						<SidebarChatsList/>
 					</div>
+					<pre>
+						{{ useSentFriendRequestsStore().getSentFriendRequests }}
+					</pre>
 				</div>
 			</div>
 			<SidebarQuickPanel/>

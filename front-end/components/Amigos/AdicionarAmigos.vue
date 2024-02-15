@@ -38,21 +38,19 @@ const solicitarAmizade = async () => {
 	clearTimeout(timeOut())
 	processando.value = true
 
-	await useNuxtApp().$axios.post('/usuario/solicitar-amizade', {
-		email: email.value
-	})
-		.then((response) => {
-			erro.value = false
-			retorno.value = response.data.mensagem
-			email.value = ''
-			timeOut()
-			useSentFriendRequestsStore().fetchSentFriendRequests()
-		})
-		.catch((error) => {
-			console.error(error)
-			erro.value = true
-			retorno.value = error.response ? error.response.data.mensagem : 'Servidor indisponível'
-		})
+	try {
+		const { mensagem } = await useFriendRequestsStore().sendFriendRequest(email.value)
+		erro.value = false
+		retorno.value = mensagem
+		email.value = ''
+		timeOut()
+		useSentFriendRequestsStore().fetchSentFriendRequests()
+	}
+	catch (error) {
+		console.error(error)
+		erro.value = true
+		retorno.value = error.response ? error.response.data.mensagem : 'Servidor indisponível'
+	}
 
 	processando.value = false
 }

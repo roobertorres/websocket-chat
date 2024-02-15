@@ -10,9 +10,19 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
         getNewFriendRequests: (state) => state.newFriendRequests,
     },
     actions: {
+        async sendFriendRequest(email) {
+            try {
+                const { data } = await axios.post('/usuario/solicitar-amizade', { email })
+                return data
+            }
+            catch (error) {
+                console.error(error)
+                throw Error(error)
+            }
+        },
         async fetchFriendRequests() {
             const { data } = await axios.get('/usuario/solicitacoes-amizade')
-            this.friendRequests = data
+            data.forEach((request) => this.friendRequests.set(request.id_solicitacao_amizade, request))
         },
         async acceptFriendRequest(id) {
             try {
@@ -47,6 +57,21 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
         async fetchFriendRequestsQuantity() {
             const { data } = await axios.get('/usuario/solicitacoes-amizade/quantidade')
             this.newFriendRequests = Number(data.quantidade)
-        }
+        },
+        newFriendRequest(request) {
+            const exists = this.friendRequests.get(request.id_solicitacao_amizade)
+            if (exists) return
+            
+            this.friendRequests.set(request.id_solicitacao_amizade, request)
+            this.newFriendRequests++
+
+            new Notification('Nova solicitação de amizade', {
+                body: `${request.nome_usuario_solicitante} quer ser seu amigo!`
+            })
+        },
+        removeFriendRequest(id) {
+            this.friendRequests.delete(id)
+            this.newFriendRequests--
+        },
     },
 })

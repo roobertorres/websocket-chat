@@ -30,7 +30,6 @@
 							</p>
 						</div>
 					</div>
-					<!--					<small>Tempo desde a última mensagem: {{ timeBetweenMessages(mensagem) }}</small>-->
 				</div>
 			</template>
 		</div>
@@ -71,22 +70,23 @@ onMounted(async () => {
 	await mensagensStore.fetchChat()
 	await nextTick()
 
-	while ((!(mensagensContainer.value.scrollHeight - 200 > mensagensContainer.value.clientHeight)) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
+	while (mensagensContainer.value.scrollHeight - 200 <= mensagensContainer.value.clientHeight && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
 		await mensagensStore.buscarMensagens()
+		await nextTick()
 	}
 
 	mensagensContainer.value.addEventListener('scroll', handleScroll)
 })
 
 onBeforeUnmount(() => {
-	mensagensContainer.value.removeEventListener('scroll', handleScroll())
+	mensagensContainer.value.removeEventListener('scroll', handleScroll)
 })
 
 const handleScroll = async () => {
 	if (!mensagensStore.buscandoMensagens) {
-		if ((mensagensContainer.value.clientHeight + (mensagensContainer.value.scrollTop * -1) >= mensagensContainer.value.scrollHeight - 200) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
+		if ((mensagensContainer.value.clientHeight + (mensagensContainer.value.scrollTop * -1) >= mensagensContainer.value.scrollHeight - 500) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
 			await mensagensStore.buscarMensagens()
-			await handleScroll()
+			await nextTick()
 		}
 	}
 }
@@ -120,10 +120,10 @@ const converterDataHorario = (data_hora) => {
 	}
 }
 
-watch(() => mensagensStore.getMensagens, async () => {
-	await nextTick()
-	// mensagensContainer.value.scrollBottom = mensagensContainer.value.scrollHeight
-})
+// watch(() => mensagensStore.getMensagens, async () => {
+// 	await nextTick()
+// mensagensContainer.value.scrollBottom = mensagensContainer.value.scrollHeight
+// })
 </script>
 
 <style scoped>

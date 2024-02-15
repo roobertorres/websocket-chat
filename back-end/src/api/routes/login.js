@@ -3,7 +3,6 @@ const db = require('../config/database')
 const gerarJWT = require('../functions/gerarJWT')
 const { rateLimit } = require("express-rate-limit")
 const bcrypt = require('bcrypt')
-const cookie = require('cookie')
 
 const limiter = rateLimit({
     windowMs: 0.25 * 60 * 1000,
@@ -54,7 +53,8 @@ router.post('/', limiter, async (req, res) => {
                         credenciaisInvalidas()
                     }
                 })
-            } else {
+            }
+            else {
                 credenciaisInvalidas()
             }
         })
@@ -63,7 +63,6 @@ router.post('/', limiter, async (req, res) => {
         res.status(401).send({ mensagem: 'E-mail ou senha incorretos' })
     }
 })
-
 
 
 module.exports = router

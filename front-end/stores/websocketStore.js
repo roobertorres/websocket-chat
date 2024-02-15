@@ -1,3 +1,5 @@
+import { useFriendRequestsStore } from "./friendRequests.js";
+
 export const useWebsocketStore = defineStore('websocketStore', {
     state: () => ({
         socket: null,
@@ -26,8 +28,8 @@ export const useWebsocketStore = defineStore('websocketStore', {
                 }
 
                 this.socket.onmessage = async (message) => {
-                    console.log('📨 Mensagem recebida:', message)
                     let mensagem = await JSON.parse(message.data)
+                    console.log('📨 Mensagem recebida:', mensagem)
 
                     if (mensagem.grupo === 'FRIEND_ACTIVITY') {
                         useAmigosStore().setFriendStatus(mensagem.id_usuario, mensagem.tipo)
@@ -68,7 +70,34 @@ export const useWebsocketStore = defineStore('websocketStore', {
                     }
 
                     if (mensagem.grupo === 'SOLICITACAO_AMIZADE') {
-                        useAmigosStore().notificacoes.push(mensagem.solicitacao)
+                        switch (mensagem.tipo) {
+                            case 'ENVIADA':
+                                useSentFriendRequestsStore().addSentFriendRequest(mensagem.solicitacao)
+                                break
+                            case 'RECEBIDA':
+                                useFriendRequestsStore().newFriendRequest(mensagem.solicitacao)
+                                break
+                            case 'ACEITA':
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useAmigosStore().fetchFriends()
+                                break
+                            case 'ACEITOU':
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useAmigosStore().fetchFriends()
+                                break
+                            case 'RECUSOU':
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                break
+                            case 'RECUSADA':
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                break
+                            case 'CANCELAR_RECEBIDA':
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                break
+                            case 'CANCELAR_ENVIADA':
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                break
+                        }
                     }
                 }
             }

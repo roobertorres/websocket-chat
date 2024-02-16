@@ -46,10 +46,10 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     const { id_chat } = req.params
     const { texto_mensagem } = req.body
 
-    if (!id_chat || !texto_mensagem) return res.status(400).send({ mensagem: 'Informe o id do chat e a mensagem' })
+    if (!id_chat || !texto_mensagem) return res.status(422).send({ mensagem: 'Informe o id do chat e a mensagem' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
+    if (verificar_participante.length === 0) return res.status(404).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const data_hora_mensagem = new Date()
@@ -92,7 +92,7 @@ router.get('/mensagens/:id_chat', async (req, res) => {
     if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
+    if (verificar_participante.length === 0) return res.status(404).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const last = req.query?.last ? String(req.query.last) : null

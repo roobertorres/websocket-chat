@@ -7,12 +7,13 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
     }),
     getters: {
         getFriendRequests: (state) => Array.from(state.friendRequests.values()),
-        getNewFriendRequests: (state) => state.newFriendRequests,
+        getNewFriendRequests: (state) => Number(state.newFriendRequests),
     },
     actions: {
         async fetchFriendRequests() {
             const { data } = await axios.get('/usuario/solicitacoes-amizade')
             data.forEach((request) => this.friendRequests.set(request.id_solicitacao_amizade, request))
+            this.newFriendRequests = data.length
         },
         async acceptFriendRequest(id) {
             try {
@@ -25,14 +26,17 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
                 useNuxtApp().$toast.add({
                     severity: 'info',
                     summary: 'Oops!',
-                    detail: error.response ? error.response.data.message : 'O servidor está indisponível'
+                    detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível'
                 })
+
+                if (error.response.status === 404) this.removeSentFriendRequest(id)
             }
         },
         async rejectFriendRequest(id) {
             try {
                 await axios.post(`/usuario/solicitacao-amizade/recusar/${id}`)
                 this.friendRequests.delete(id)
+                this.newFriendRequests--
                 useAmigosStore().fetchFriends()
             }
             catch (error) {
@@ -40,8 +44,10 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
                 useNuxtApp().$toast.add({
                     severity: 'info',
                     summary: 'Oops!',
-                    detail: error.response ? error.response.data.message : 'O servidor está indisponível'
+                    detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível'
                 })
+
+                if (error.response.status === 404) this.removeFriendRequest(id)
             }
         },
         async fetchFriendRequestsQuantity() {
@@ -55,8 +61,8 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
             this.friendRequests.set(request.id_solicitacao_amizade, request)
             this.newFriendRequests++
 
-            new Notification('Nova solicitação de amizade', {
-                body: `${request.nome_usuario_solicitante} quer ser seu amigo!`
+            new Notification('WS Chat', {
+                body: `${request.nome_usuario_solicitante} enviou uma solicitação de amizade!`
             })
         },
         removeFriendRequest(id) {

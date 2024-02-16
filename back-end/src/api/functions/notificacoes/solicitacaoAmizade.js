@@ -1,9 +1,7 @@
 const { clients } = require('../../../websocket/websocket.js')
 const db = require('../../config/database.js')
 
-async function notificarSolicitacaoCancelada(id) {
-    const solicitacao = await buscarSolicitacoes(id)
-
+async function notificarSolicitacaoCancelada(solicitacao) {
     if (solicitacao) {
         const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
         notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'CANCELAR_ENVIADA', solicitacao)
@@ -12,7 +10,6 @@ async function notificarSolicitacaoCancelada(id) {
 }
 
 async function notificarNovaSolicitacao(id) {
-
     const solicitacao = await buscarSolicitacoes(id)
     if (solicitacao) {
         const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
@@ -22,7 +19,6 @@ async function notificarNovaSolicitacao(id) {
 }
 
 async function notificarSolicitacaoRecusada(id) {
-
     const solicitacao = await buscarSolicitacoes(id)
     if (solicitacao) {
         const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
@@ -32,7 +28,6 @@ async function notificarSolicitacaoRecusada(id) {
 }
 
 async function notificarSolicitacaoAceita(id) {
-
     const solicitacao = await buscarSolicitacoes(id)
     if (solicitacao) {
         const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
@@ -41,31 +36,16 @@ async function notificarSolicitacaoAceita(id) {
     }
 }
 
-
-module.exports = {
-    notificarNovaSolicitacao,
-    notificarSolicitacaoRecusada,
-    notificarSolicitacaoAceita,
-    notificarSolicitacaoCancelada
-}
-
 function notificarUsuario(id, grupo, tipo, solicitacao) {
     const ws = clients.get(id)
 
     if (ws) {
-
         ws.forEach((conexao) => {
             if (conexao) {
                 conexao.send(JSON.stringify({
                     grupo,
                     tipo,
-                    solicitacao: {
-                        id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
-                        nome_usuario_solicitante: solicitacao.nome_usuario_solicitante,
-                        email_usuario_solicitante: solicitacao.email_usuario_solicitante,
-                        nome_usuario_solicitado: solicitacao.nome_usuario_solicitado,
-                        email_usuario_solicitado: solicitacao.email_usuario_solicitado,
-                    },
+                    solicitacao: { ...solicitacao },
                 }))
             }
         })
@@ -93,7 +73,14 @@ async function buscarSolicitacoes(id) {
         id_solicitacao_amizade = ?
         `,
         [id])
-    console.log(result)
 
-    return result
+    return { ...result[0] }
+}
+
+module.exports = {
+    notificarNovaSolicitacao,
+    notificarSolicitacaoRecusada,
+    notificarSolicitacaoAceita,
+    notificarSolicitacaoCancelada,
+    buscarSolicitacoes
 }

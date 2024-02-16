@@ -12,6 +12,7 @@ export const useChatsStore = defineStore('chatsStore', {
             const chat = state.chats.get(id_chat)
             return chat ? chat.notificacoes : 0
         },
+        getChatUser: state => id_usuario => state.chatUsers.get(id_usuario),
     },
     actions: {
         limparNotificacoes(id_chat) {

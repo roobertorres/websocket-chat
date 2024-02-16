@@ -14,6 +14,8 @@ export const useSentFriendRequestsStore = defineStore('SentFriendRequests', {
             data.forEach((request) => this.sentFriendRequests.set(request.id_solicitacao_amizade, request))
         },
         async cancelFriendshipRequest(id) {
+            useNuxtApp().$toast.removeAllGroups()
+
             try {
                 await axios.delete(`/usuario/solicitacoes-amizade/cancelar/${id}`)
                 this.sentFriendRequests.delete(id)
@@ -29,9 +31,14 @@ export const useSentFriendRequestsStore = defineStore('SentFriendRequests', {
                 console.error(error)
                 useNuxtApp().$toast.add({
                     severity: 'info',
-                    detail: error.response ? error.response.data.message : 'Servidor indisponível',
+                    summary: 'Oops!',
+                    detail: error.response ? error.response.data.mensagem : 'Servidor indisponível',
                     life: 5000
                 })
+
+                console.log(error.response.status)
+
+                if (error.response.status === 404) this.removeSentFriendRequest(id)
             }
         },
         clearSentFriendRequests() {

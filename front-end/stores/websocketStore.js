@@ -47,7 +47,6 @@ export const useWebsocketStore = defineStore('websocketStore', {
                         else {
                             new Notification(mensagem.mensagem.nome_usuario_remetente, {
                                 body: mensagem.mensagem.texto_mensagem,
-                                icon: '/users/roberto-torres.png'
                             })
 
                             useChatsStore().adicionarNotificacao(mensagem.mensagem)
@@ -56,10 +55,7 @@ export const useWebsocketStore = defineStore('websocketStore', {
 
                     if (mensagem.grupo === 'MENSAGEM_ENVIADA') {
                         if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
-                            useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, {
-                                ...mensagem.mensagem,
-                                nome_usuario_remetente: useUsuarioStore().getNomeUsuario,
-                            })
+                            useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
                         }
                     }
 
@@ -78,24 +74,24 @@ export const useWebsocketStore = defineStore('websocketStore', {
                                 useFriendRequestsStore().newFriendRequest(mensagem.solicitacao)
                                 break
                             case 'ACEITA':
-                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
-                                useAmigosStore().fetchFriends()
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
+                                useAmigosStore().newFriend(mensagem.solicitacao)
                                 break
                             case 'ACEITOU':
-                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 useAmigosStore().fetchFriends()
                                 break
                             case 'RECUSOU':
-                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 break
                             case 'RECUSADA':
-                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 break
                             case 'CANCELAR_RECEBIDA':
-                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 break
                             case 'CANCELAR_ENVIADA':
-                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao)
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 break
                         }
                     }

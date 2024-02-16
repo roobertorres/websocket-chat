@@ -20,6 +20,12 @@ export const useAmigosStore = defineStore('amigosStore', {
         },
         addFriend(friend) {
             this.amigos.set(friend.id_usuario, friend)
+        },
+        newFriend(request) {
+            new Notification('WS Chat', {
+                body: `${request.nome_usuario_solicitante} aceitou sua solicitação de amizade`,
+            })
+            this.fetchFriends()
         }
     }
 })

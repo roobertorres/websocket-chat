@@ -7,7 +7,8 @@
 				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
 				     :class="{ 'mt-4': !mensagemAnteriorMesmoRemetente(mensagem) &&  mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB}">
 					<Avatar v-show="!mensagemAnteriorMesmoRemetente(mensagem)"
-					        :label="mensagem.nome_usuario_remetente?.charAt(0) || '?'" shape="circle"
+					        :label="remetentUserName(mensagem.usuario_remetente).charAt(0)"
+					        shape="circle"
 					        size="normal"/>
 					<div>
 						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem)"
@@ -49,7 +50,7 @@ const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
 const remetentUserName = (id) => {
-	const user = useChatsStore().chatUsers.get(id)
+	const user = useMensagensStore().chatParticipants.get(id)
 
 	if (user) {
 		return user.nome_usuario
@@ -58,7 +59,7 @@ const remetentUserName = (id) => {
 		return useUsuarioStore().getNomeUsuario
 	}
 	else {
-		return useUsuarioStore().getUsuarioId
+		return '?'
 	}
 }
 

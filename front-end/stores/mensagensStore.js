@@ -16,23 +16,27 @@ export const useMensagensStore = defineStore('mensagensStore', {
         getMessagesCountDB: state => state.totalMessagesDB,
     },
     actions: {
-        clearMessages() {
-            this.mensagens.clear()
-            this.totalMessagesDB = 0
-        },
-        adicionarMensagem(id_mensagem, mensagem) {
-            this.mensagens.set(id_mensagem, mensagem)
-            this.mensagens = new Map([...this.mensagens.entries()].sort((a, b) => a[0] - b[0]))
-        },
         async enviarMensagem(id_chat, mensagem) {
             try {
                 const { data } = await axios.post(`/chat/mensagens/${id_chat}`, {
                     'texto_mensagem': mensagem
                 })
-                return data
+
+                this.adicionarMensagem(data.id_mensagem, {
+                    ...data,
+                    id_usuario_remetente: useUsuarioStore().getIdUsuario,
+                    excluida: 0,
+                    lida: 1,
+                })
             }
             catch (error) {
-                throw new Error(error)
+                useNuxtApp().$toast.removeAllGroups()
+                useNuxtApp().$toast.add({
+                    severity: 'warn',
+                    summary: 'Oops!',
+                    detail: error.response ? error.response.data.mensagem : 'O servidor está indisponível'
+                })
+                throw new Error()
             }
         },
         async buscarMensagens(clear_notifications = false) {
@@ -55,21 +59,39 @@ export const useMensagensStore = defineStore('mensagensStore', {
 
                 this.totalMessagesDB = Number(response.headers['x-total-count'])
             }
-            catch (err) {
-                console.error(err)
+            catch (error) {
+                console.error(error)
                 useNuxtApp().$toast.removeAllGroups()
-                useNuxtApp().$toast.add({
-                    severity: 'warn',
-                    summary: 'Oops!',
-                    detail: 'Não conseguimos buscar as mensagens no momento. Tente novamente mais tarde.',
-                })
+
+                if (error.response.status === 404) {
+                    navigateTo('/dashboard')
+
+                    useNuxtApp().$toast.add({
+                        severity: 'info',
+                        summary: 'Conversa não encontrada',
+                        detail: 'A conversa solicitada não existe. Levamos você para a página inicial :)',
+                    })
+                }
+                else {
+                    useNuxtApp().$toast.add({
+                        severity: 'warn',
+                        summary: 'Oops!',
+                        detail: 'Não conseguimos buscar as mensagens no momento. Tente novamente mais tarde.',
+                    })
+                }
             }
 
             this.buscandoMensagens = false
         },
+        adicionarMensagem(id_mensagem, mensagem) {
+            const exists = this.mensagens.get(id_mensagem)
+            if (exists) return
+
+            this.mensagens.set(id_mensagem, mensagem)
+            this.mensagens = new Map([...this.mensagens.entries()].sort((a, b) => a[0] - b[0]))
+        },
         async fetchChat() {
             this.mensagens.clear()
-
             this.buscarMensagens(true)
 
             const id_chat = useRoute().params.id
@@ -77,6 +99,7 @@ export const useMensagensStore = defineStore('mensagensStore', {
             try {
                 const { data } = await axios.get(`/chat/participantes/${id_chat}`)
                 this.chatParticipants.clear()
+
                 data.forEach(participant => {
                     this.chatParticipants.set(participant.id_usuario, participant)
                 })
@@ -84,6 +107,10 @@ export const useMensagensStore = defineStore('mensagensStore', {
             catch (error) {
                 console.error(error)
             }
-        }
+        },
+        clearMessages() {
+            this.mensagens.clear()
+            this.totalMessagesDB = 0
+        },
     }
 })

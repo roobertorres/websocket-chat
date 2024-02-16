@@ -19,7 +19,7 @@
 						{{ solicitacao.nome_usuario_solicitado }}
 					</p>
 					<small class="text-gray-400 w-full" :title="solicitacao.email">
-						{{ solicitacao.email }}
+						{{ solicitacao.email_usuario_solicitado }}
 					</small>
 				</div>
 				<div class="flex gap-2">

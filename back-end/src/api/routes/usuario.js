@@ -116,7 +116,7 @@ router.post('/solicitacao-amizade/recusar/:id_solicitacao_amizade', async (req, 
 
     try {
         const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitado = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
-        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+        if (solicitacao_amizade.length === 0) return res.status(404).send({ mensagem: 'Solicitação de amizade não encontrada' })
 
         await db.query('START TRANSACTION')
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 0 WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
@@ -143,7 +143,7 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
 
     try {
         const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitado = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
-        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+        if (solicitacao_amizade.length === 0) return res.status(404).send({ mensagem: 'Solicitação de amizade não encontrada' })
 
         await db.query('START TRANSACTION')
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ? WHERE id_solicitacao_amizade = ?', [new Date(), id_solicitacao_amizade])
@@ -182,19 +182,21 @@ router.delete('/solicitacoes-amizade/cancelar/:id_solicitacao_amizade', async (r
 
     try {
         const [solicitacao_amizade] = await db.query('SELECT * FROM solicitacao_amizade WHERE id_solicitacao_amizade = ? AND usuario_solicitante = ? AND pendente = 1', [id_solicitacao_amizade, id_usuario])
-        if (solicitacao_amizade.length === 0) return res.status(400).send({ mensagem: 'Solicitação de amizade não encontrada' })
+        if (solicitacao_amizade.length === 0) return res.status(404).send({ mensagem: 'Solicitação de amizade não encontrada' })
+
+        const solicitacao = await notificacoesSolicitacaoAmizade.buscarSolicitacoes(id_solicitacao_amizade)
 
         await db.query('START TRANSACTION')
         await db.execute('DELETE FROM solicitacao_amizade WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
         res.send({ mensagem: 'Solicitação de amizade cancelada' })
 
         try {
-            await notificacoesSolicitacaoAmizade.notificarSolicitacaoCancelada(id_solicitacao_amizade)
+            await notificacoesSolicitacaoAmizade.notificarSolicitacaoCancelada(solicitacao)
         }
         catch (error) {
             console.error('Erro ao notificar solicitação de amizade cancelada: ', error)
         }
-        
+
         await db.query('COMMIT')
     }
     catch (err) {
@@ -214,7 +216,7 @@ router.get('/solicitacoes-amizade/enviadas', async (req, res) => {
             return {
                 id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
                 nome_usuario_solicitado: solicitacao.nome_usuario,
-                email: solicitacao.email
+                email_usuario_solicitado: solicitacao.email
             }
         }))
     }
@@ -233,7 +235,7 @@ router.get('/solicitacoes-amizade', async (req, res) => {
             return {
                 id_solicitacao_amizade: solicitacao.id_solicitacao_amizade,
                 nome_usuario_solicitante: solicitacao.nome_usuario,
-                email: solicitacao.email
+                email_usuario_solicitante: solicitacao.email
             }
         }))
     }
@@ -260,13 +262,13 @@ router.post('/solicitar-amizade', async (req, res) => {
     const { id_usuario } = req
     const { email } = req.body
 
-    if (!email) return res.status(400).send({ mensagem: 'Informe o e-mail do usuário' })
+    if (!email) return res.status(422).send({ mensagem: 'Informe o e-mail do usuário' })
 
     if (email === req.email) return res.status(400).send({ mensagem: 'Você não pode adicionar a si mesmo.' })
 
     // Verificar se o usuário existe
     const [usuario] = await db.query('SELECT id_usuario FROM usuario WHERE email = ?', [email])
-    if (usuario.length === 0) return res.status(400).send({ mensagem: 'Nenhuma conta encontrada com este e-mail.' })
+    if (usuario.length === 0) return res.status(404).send({ mensagem: 'Nenhuma conta encontrada com este e-mail.' })
 
     // Verificar se já existe uma solicitação de amizade pendente do usuário solicitado
     const [solicitacao_recebida] = await db.query('SELECT id_solicitacao_amizade FROM solicitacao_amizade WHERE usuario_solicitante = ? AND usuario_solicitado = ? AND pendente = 1 AND ativo = 0', [usuario[0].id_usuario, id_usuario])

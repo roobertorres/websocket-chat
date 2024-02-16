@@ -23,8 +23,6 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount } from 'vue';
-
 const email = ref('')
 const retorno = ref('')
 const erro = ref(false)
@@ -39,23 +37,24 @@ const solicitarAmizade = async () => {
 	processando.value = true
 
 	try {
-		const { mensagem } = await useFriendRequestsStore().sendFriendRequest(email.value)
+		const { data } = await useNuxtApp().$axios.post('/usuario/solicitar-amizade', {
+			'email': email.value
+		})
+
 		erro.value = false
-		retorno.value = mensagem
+		retorno.value = data.mensagem
 		email.value = ''
 		timeOut()
 		useSentFriendRequestsStore().fetchSentFriendRequests()
 	}
 	catch (error) {
-		console.error(error)
+		console.error('Erro ao solicitar amizade: ', error)
 		erro.value = true
-		retorno.value = error.response ? error.response.data.mensagem : 'Servidor indisponível'
+		retorno.value = error.response ? error.response.data.mensagem : 'Não conseguimos acessar o servidor neste momento.'
 	}
 
 	processando.value = false
 }
-
-
 </script>
 
 <style lang="scss">

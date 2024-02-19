@@ -11,6 +11,11 @@
 <script setup>
 let mensagem = ref('')
 let enviando = ref(false)
+let mensagensContainer = ref(null)
+
+onMounted(() => {
+	mensagensContainer = document.getElementById('mensagensContainer')
+})
 
 const enviarMensagem = async () => {
 	enviando.value = true
@@ -18,12 +23,14 @@ const enviarMensagem = async () => {
 	const id_chat = useRoute().params.id
 
 	await useMensagensStore().enviarMensagem(id_chat, mensagem.value)
-		.then(() => {
+		.then(async () => {
 			mensagem.value = ''
 			enviando.value = false
+			mensagensContainer.scrollTop = 0
 		})
 
 	await nextTick()
 	document.getElementById('campo-enviar-mensagem').focus()
 }
+
 </script>

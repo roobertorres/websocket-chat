@@ -86,6 +86,31 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     }
 })
 
+router.post('/mensagem/marcar-como-lida/:id_mensagem', async (req, res) => {
+    const { id_usuario } = req
+    const { id_mensagem } = req.params
+
+    if (!id_mensagem) return res.status(422).send({ mensagem: 'Informe o id da mensagem' })
+
+    try {
+        const [mensagem] = await db.query('SELECT chat_mensagem FROM mensagem WHERE id_mensagem = ?', [id_mensagem])
+        if (mensagem.length === 0) return res.status(404).send({ mensagem: 'Mensagem não encontrada' })
+
+        const [chat] = await db.query('SELECT chat_participante FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [mensagem[0].chat_mensagem, id_usuario])
+        if (chat.length === 0) return res.status(404).send({ mensagem: 'Chat não encontrado' })
+
+        await db.query('START TRANSACTION')
+        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = 0 WHERE chat_participante = ? AND usuario_participante = ?', [mensagem[0].chat_mensagem, id_usuario])
+        await db.query('COMMIT')
+        res.send({ mensagem: 'Mensagem marcada como lida' })
+    }
+    catch (err) {
+        await db.query('ROLLBACK')
+        console.error(err)
+        res.status(500).send({ mensagem: 'Houve um erro ao marcar a mensagem como lida' })
+    }
+})
+
 router.get('/mensagens/:id_chat', async (req, res) => {
     const { id_usuario } = req
     const { id_chat } = req.params

@@ -6,11 +6,14 @@
 				<div class="flex gap-3 align-items-start"
 				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
 				     :class="{ 'mt-3': (!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)) && index !== 0}">
-					<Avatar v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
-					        :label="remetentUserName(mensagem.usuario_remetente).charAt(0)"
-					        shape="circle"
-					        size="normal"/>
-					<div>
+					<div class="avatar-container">
+						<Avatar
+							v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
+							:label="remetentUserName(mensagem.usuario_remetente).charAt(0)"
+							shape="circle"
+							size="normal"/>
+					</div>
+					<div class="message" style="border: 1px solid yellow">
 						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
 						     class="flex gap-2 align-items-center">
 							<p class="m-0">
@@ -20,9 +23,9 @@
 								{{ converterDataHorario(mensagem.data_hora_mensagem) }}
 							</small>
 						</div>
-						<div class="messages-minute mt-1 flex flex-column">
+						<div class="mt-1 flex flex-column">
 							<p class="m-0"
-							   :class="{ 'ml-6': messageMarginLeft(mensagem)  }">
+							   :class="{ 'ml-5': messageMarginLeft(mensagem)  }">
 								<template v-if="!mensagem.excluida">
 									{{ mensagem.texto_mensagem }}
 								</template>
@@ -30,6 +33,11 @@
 									<i>Esta mensagem foi excluída</i>
 								</template>
 							</p>
+						</div>
+						<div class="flex h-full justify-content-end" style="border: 1px solid red">
+							<small style="color: darkgray; word-wrap: nowrap;"
+							       v-if="index === mensagensStore.getMensagens.length -1">
+								✓ Visto, 13:53</small>
 						</div>
 					</div>
 				</div>
@@ -39,7 +47,8 @@
 		        :label="mensagensStore.buscandoMensagens ? 'Buscando...' : 'Carregar mais'" class="w-2 m-auto"
 		        :loading="mensagensStore.buscandoMensagens"
 		        @click="mensagensStore.buscarMensagens()" size="small" text/>
-		<div v-else-if="!mensagensStore.buscandoMensagens">
+		<!--		<div v-else-if="!mensagensStore.buscandoMensagens" id="elemento">-->
+		<div id="elemento">
 			<h3>Este é o início desta conversa.</h3>
 			<Divider/>
 		</div>
@@ -50,7 +59,18 @@
 const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
+const observer = new IntersectionObserver((entries) => {
+	entries.forEach((entry) => {
+		if (entry.isIntersecting) {
+			console.log('Intersecting!')
+		}
+	})
+}, null)
+
 onMounted(async () => {
+	const element = document.querySelector('#elemento')
+	observer.observe(element)
+
 	await mensagensStore.fetchChat()
 	await nextTick()
 
@@ -139,10 +159,10 @@ const converterDataHorario = (data_hora) => {
 	}
 }
 
-// watch(() => mensagensStore.getMensagens, async () => {
-// 	await nextTick()
-// mensagensContainer.value.scrollBottom = mensagensContainer.value.scrollHeight
-// })
+watch(() => mensagensStore.getMensagens, async () => {
+	console.log(mensagensContainer.value.scrollTop)
+	if (mensagensContainer.value.scrollTop > 0 && mensagensContainer.value.scrollTop < 5) mensagensContainer.value.scrollTop = 0
+})
 </script>
 
 <style scoped>
@@ -162,6 +182,14 @@ const converterDataHorario = (data_hora) => {
 	&::-webkit-scrollbar-thumb {
 		border-radius: 10px;
 		background-color: var(--surface-50);
+	}
+
+	.message {
+		width: 100%;
+
+		&:hover {
+			background: var(--surface-hover);
+		}
 	}
 }
 </style>

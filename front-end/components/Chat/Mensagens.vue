@@ -5,13 +5,13 @@
 			<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
 				<div class="flex gap-3 align-items-start"
 				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
-				     :class="{ 'mt-4': !mensagemAnteriorMesmoRemetente(mensagem) &&  mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB}">
-					<Avatar v-show="!mensagemAnteriorMesmoRemetente(mensagem)"
+				     :class="{ 'mt-3': (!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)) && index !== 0}">
+					<Avatar v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
 					        :label="remetentUserName(mensagem.usuario_remetente).charAt(0)"
 					        shape="circle"
 					        size="normal"/>
 					<div>
-						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem)"
+						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
 						     class="flex gap-2 align-items-center">
 							<p class="m-0">
 								<b>{{ remetentUserName(mensagem.usuario_remetente) }}</b>
@@ -21,7 +21,8 @@
 							</small>
 						</div>
 						<div class="messages-minute mt-1 flex flex-column">
-							<p class="m-0" :class="{ 'ml-6': mensagemAnteriorMesmoRemetente(mensagem) }">
+							<p class="m-0"
+							   :class="{ 'ml-6': messageMarginLeft(mensagem)  }">
 								<template v-if="!mensagem.excluida">
 									{{ mensagem.texto_mensagem }}
 								</template>
@@ -49,6 +50,22 @@
 const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
+onMounted(async () => {
+	await mensagensStore.fetchChat()
+	await nextTick()
+
+	while (mensagensContainer.value.scrollHeight - 100 <= mensagensContainer.value.clientHeight && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
+		await mensagensStore.buscarMensagens()
+		await nextTick()
+	}
+
+	mensagensContainer.value.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+	mensagensContainer.value.removeEventListener('scroll', handleScroll)
+})
+
 const remetentUserName = (id) => {
 	const user = useMensagensStore().chatParticipants.get(id)
 
@@ -67,22 +84,6 @@ const buttonFetchMessagesVisible = computed(() => {
 	return mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB || (mensagensStore.getMessagesCount === 0 && mensagensStore.buscandoMensagens)
 })
 
-onMounted(async () => {
-	await mensagensStore.fetchChat()
-	await nextTick()
-
-	while (mensagensContainer.value.scrollHeight - 200 <= mensagensContainer.value.clientHeight && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
-		await mensagensStore.buscarMensagens()
-		await nextTick()
-	}
-
-	mensagensContainer.value.addEventListener('scroll', handleScroll)
-})
-
-onBeforeUnmount(() => {
-	mensagensContainer.value.removeEventListener('scroll', handleScroll)
-})
-
 const handleScroll = async () => {
 	if (!mensagensStore.buscandoMensagens) {
 		if ((mensagensContainer.value.clientHeight + (mensagensContainer.value.scrollTop * -1) >= mensagensContainer.value.scrollHeight - 500) && mensagensStore.getMessagesCount < mensagensStore.getMessagesCountDB) {
@@ -92,7 +93,19 @@ const handleScroll = async () => {
 	}
 }
 
-const mensagemAnteriorMesmoRemetente = (mensagem) => {
+const messageMarginLeft = (message) => {
+	if (mensagemAnteriorMesmoRemetente(message) && !mensagemAnteriorMesmoMinuto(message)) {
+		return false
+	}
+	else if (mensagemAnteriorMesmoRemetente(message) && mensagemAnteriorMesmoMinuto(message)) {
+		return true
+	}
+	else {
+		return false
+	}
+}
+
+const mensagemAnteriorMesmoMinuto = (mensagem) => {
 	const mensagem_anterior = {
 		...mensagensStore.getMensagem(mensagem.id_mensagem - 1)
 	}
@@ -100,10 +113,15 @@ const mensagemAnteriorMesmoRemetente = (mensagem) => {
 	const horario_mensagem_anterior = new Date(mensagem_anterior.data_hora_mensagem).getTime()
 	const horario_mensagem_atual = new Date(mensagem.data_hora_mensagem).getTime()
 
-	const same_minute = Number(((horario_mensagem_atual - horario_mensagem_anterior) / 1000 / 60).toFixed(0)) === 0
-	const same_user = mensagem_anterior && mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
+	return Number(((horario_mensagem_atual - horario_mensagem_anterior) / 1000 / 60).toFixed(0)) === 0
+}
 
-	return same_minute && same_user
+const mensagemAnteriorMesmoRemetente = (mensagem) => {
+	const mensagem_anterior = {
+		...mensagensStore.getMensagem(mensagem.id_mensagem - 1)
+	}
+
+	return mensagem_anterior && mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
 }
 
 const converterDataHorario = (data_hora) => {

@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const db = require('../config/database.js')
-const notificacoes = require("../functions/notificacoes/novaMensagem");
+const notificacoes = require("../functions/notificacoes/novaMensagem")
+const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
 
 // get dos chats do usuário que retorna o id do chat, nome do outro usuário
 
@@ -130,17 +131,16 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 50
         `, [id_chat, last, last])
 
-        const { clear_notifications } = req.query
-
-        if (clear_notifications === true) {
-            const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
-            limparNotificacoesChat(id_usuario, id_chat)
-        }
-
         await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = 0 WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
 
         res.setHeader('x-total-count', total_messages[0].count_messages || 0)
         res.send(messages)
+
+        const { clear_notifications } = req.query
+
+        if (clear_notifications) {
+            limparNotificacoesChat(id_usuario, id_chat)
+        }
     }
     catch (err) {
         console.error(err)

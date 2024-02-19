@@ -36,8 +36,6 @@ export const useSentFriendRequestsStore = defineStore('SentFriendRequests', {
                     life: 5000
                 })
 
-                console.log(error.response.status)
-
                 if (error.response.status === 404) this.removeSentFriendRequest(id)
             }
         },

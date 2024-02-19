@@ -49,7 +49,7 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 const response = await axios.get(`/chat/mensagens/${id_chat}`, {
                     params: {
                         last: last_id,
-                        clear_notifications,
+                        clear_notifications: clear_notifications ? true : null
                     }
                 })
 
@@ -91,9 +91,6 @@ export const useMensagensStore = defineStore('mensagensStore', {
             this.mensagens = new Map([...this.mensagens.entries()].sort((a, b) => a[0] - b[0]))
         },
         async fetchChat() {
-            this.mensagens.clear()
-            this.buscarMensagens(true)
-
             const id_chat = useRoute().params.id
 
             try {
@@ -103,6 +100,9 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 data.forEach(participant => {
                     this.chatParticipants.set(participant.id_usuario, participant)
                 })
+
+                this.mensagens.clear()
+                await this.buscarMensagens(true)
             }
             catch (error) {
                 console.error(error)

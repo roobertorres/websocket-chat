@@ -146,20 +146,28 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
         if (solicitacao_amizade.length === 0) return res.status(404).send({ mensagem: 'Solicitação de amizade não encontrada' })
 
         await db.query('START TRANSACTION')
-        await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ? WHERE id_solicitacao_amizade = ?', [new Date(), id_solicitacao_amizade])
+
+        let chat_id = null
 
         // Verificar se já existe um chat privado entre os usuários
         const [chat_existente] = await db.query('SELECT * FROM chat WHERE tipo = "PRIVADO" AND id_chat IN (SELECT chat_participante FROM participante_chat WHERE usuario_participante = ?) AND id_chat IN (SELECT chat_participante FROM participante_chat WHERE usuario_participante = ?)', [id_usuario, solicitacao_amizade[0].usuario_solicitante])
 
         if (chat_existente.length === 0) {
+            // Criar um chat privado
             const [chat] = await db.execute('INSERT INTO chat (tipo) VALUES ("PRIVADO")')
+            chat_id = chat.insertId
 
             // Adicionar os usuários participantes do chat
             await db.execute('INSERT INTO participante_chat (chat_participante, usuario_participante) VALUES (?, ?)', [chat.insertId, id_usuario])
             await db.execute('INSERT INTO participante_chat (chat_participante, usuario_participante) VALUES (?, ?)', [chat.insertId, solicitacao_amizade[0].usuario_solicitante])
         }
+        else {
+            chat_id = chat_existente[0].id_chat
+        }
 
+        await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ?, private_chat = ? WHERE id_solicitacao_amizade = ?', [new Date(), chat_id, id_solicitacao_amizade])
         await db.query('COMMIT')
+        
         res.send({ mensagem: 'Solicitação de amizade aceita' })
 
         try {

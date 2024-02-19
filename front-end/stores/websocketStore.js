@@ -74,11 +74,11 @@ export const useWebsocketStore = defineStore('websocketStore', {
                                 useFriendRequestsStore().newFriendRequest(mensagem.solicitacao)
                                 break
                             case 'ACEITA':
-                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
+                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 useAmigosStore().newFriend(mensagem.solicitacao)
                                 break
                             case 'ACEITOU':
-                                useSentFriendRequestsStore().removeSentFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
+                                useFriendRequestsStore().removeFriendRequest(mensagem.solicitacao.id_solicitacao_amizade)
                                 useAmigosStore().fetchFriends()
                                 break
                             case 'RECUSOU':

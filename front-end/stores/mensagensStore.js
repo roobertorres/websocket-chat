@@ -64,7 +64,7 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 useNuxtApp().$toast.removeAllGroups()
 
                 if (error.response.status === 404) {
-                    navigateTo('/dashboard')
+                    await navigateTo('/dashboard')
 
                     useNuxtApp().$toast.add({
                         severity: 'info',

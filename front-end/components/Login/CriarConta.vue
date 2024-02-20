@@ -46,7 +46,7 @@ const createAccount = async () => {
 			senha: senha.value.trim(),
 		})
 
-		navigateTo('/dashboard')
+		await navigateTo('/dashboard')
 	}
 	catch (error) {
 		if (error.response) {

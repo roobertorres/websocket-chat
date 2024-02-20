@@ -10,7 +10,7 @@ onMounted(async () => {
 		.catch(() => {
 		})
 
-	navigateTo({
+	await navigateTo({
 		name: 'login',
 		replace: true,
 		query: {

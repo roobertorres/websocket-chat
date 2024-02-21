@@ -4,8 +4,8 @@
 		<div class="messages-container flex flex-column">
 			<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
 				<div class="flex gap-3 align-items-start"
-				     :ref="index === mensagensStore.getMensagens.length - 1 ? 'lastMessage' : null"
-				     :class="{ 'mt-3': (!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)) && index !== 0}">
+				     :class="{ 'mt-3': (!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)) && index !== 0}"
+				     :ref="el => {if (el) addObserver(el, mensagem)}">
 					<div class="avatar-container">
 						<Avatar
 							v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
@@ -13,32 +13,33 @@
 							shape="circle"
 							size="normal"/>
 					</div>
-					<div class="message" style="border: 1px solid yellow">
+					<div class="message">
 						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
 						     class="flex gap-2 align-items-center">
 							<p class="m-0">
 								<b>{{ remetentUserName(mensagem.usuario_remetente) }}</b>
 							</p>
-							<small style="color: darkgray">
-								{{ converterDataHorario(mensagem.data_hora_mensagem) }}
-							</small>
+							<ChatMensagensDataHoraMensagem :data="mensagem.data_hora_mensagem"/>
 						</div>
 						<div class="mt-1 flex flex-column">
-							<p class="m-0"
-							   :class="{ 'ml-5': messageMarginLeft(mensagem)  }">
-								<template v-if="!mensagem.excluida">
-									{{ mensagem.texto_mensagem }}
-								</template>
-								<template v-else>
-									<i>Esta mensagem foi excluída</i>
-								</template>
-							</p>
+							<div class="mt-1 flex flex-column">
+								<p class="m-0" :class="{ 'ml-5': messageMarginLeft(mensagem)  }">
+									<template v-if="!mensagem.excluida">
+										{{ mensagem.texto_mensagem }}
+									</template>
+								</p>
+							</div>
 						</div>
-						<div class="flex h-full justify-content-end" style="border: 1px solid red">
-							<small style="color: darkgray; word-wrap: nowrap;"
-							       v-if="index === mensagensStore.getMensagens.length -1">
-								✓ Visto, 13:53</small>
-						</div>
+						<!--						<small>{{ mensagem.lida ? 'Lida!' : 'Não lida' }}</small>-->
+					</div>
+					<div class="flex h-full align-items-end gap-2">
+						<!--						<small style="color: darkgray; white-space: nowrap;"-->
+						<!--						       v-if="mensagem.lida">-->
+						<!--							✓ Lida-->
+						<!--						</small>-->
+						<small>{{ mensagem.id_mensagem }}</small>
+
+						<small>{{ mensagem.lida }}</small>
 					</div>
 				</div>
 			</template>
@@ -59,18 +60,41 @@
 const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
-const observer = new IntersectionObserver((entries) => {
-	entries.forEach((entry) => {
-		if (entry.isIntersecting) {
-			console.log('Intersecting!')
-		}
+let readMessages = ref([])
+
+let timeout = null
+
+const markMessageAsRead = (id_mensagem) => {
+	readMessages.value.push(id_mensagem)
+
+	if (timeout) {
+		clearTimeout(timeout)
+		timeout = null
+	}
+
+	timeout = setTimeout(() => {
+		useMensagensStore().registerMessagesAsRead(readMessages.value)
+		console.log(readMessages.value.length, 'mensagens enviadas para o servidor')
+		readMessages.value = []
+		timeout = null
+	}, 2000)
+}
+
+const addObserver = (el, mensagem) => {
+	const observer = new IntersectionObserver((entries) => {
+		entries.forEach(entry => {
+			if (entry.isIntersecting && mensagem.lida == 0) {
+				markMessageAsRead(mensagem.id_mensagem)
+			}
+		})
+	}, {
+		root: mensagensContainer.value,
 	})
-}, null)
+
+	observer.observe(el)
+}
 
 onMounted(async () => {
-	const element = document.querySelector('#elemento')
-	observer.observe(element)
-
 	await mensagensStore.fetchChat()
 	await nextTick()
 
@@ -85,6 +109,18 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	mensagensContainer.value.removeEventListener('scroll', handleScroll)
 })
+
+const messageMarginLeft = (message) => {
+	if (mensagemAnteriorMesmoRemetente(message) && !mensagemAnteriorMesmoMinuto(message)) {
+		return false
+	}
+	else if (mensagemAnteriorMesmoRemetente(message) && mensagemAnteriorMesmoMinuto(message)) {
+		return true
+	}
+	else {
+		return false
+	}
+}
 
 const remetentUserName = (id) => {
 	const user = useMensagensStore().chatParticipants.get(id)
@@ -113,18 +149,6 @@ const handleScroll = async () => {
 	}
 }
 
-const messageMarginLeft = (message) => {
-	if (mensagemAnteriorMesmoRemetente(message) && !mensagemAnteriorMesmoMinuto(message)) {
-		return false
-	}
-	else if (mensagemAnteriorMesmoRemetente(message) && mensagemAnteriorMesmoMinuto(message)) {
-		return true
-	}
-	else {
-		return false
-	}
-}
-
 const mensagemAnteriorMesmoMinuto = (mensagem) => {
 	const mensagem_anterior = {
 		...mensagensStore.getMensagem(mensagem.id_mensagem - 1)
@@ -144,23 +168,7 @@ const mensagemAnteriorMesmoRemetente = (mensagem) => {
 	return mensagem_anterior && mensagem_anterior.usuario_remetente === mensagem.usuario_remetente
 }
 
-const converterDataHorario = (data_hora) => {
-	const data = new Date(data_hora)
-	const hoje = new Date()
-
-	if (data.toLocaleDateString() === hoje.toLocaleDateString()) {
-		const horarioFormatado = data.toLocaleTimeString('pt-BR', { timeStyle: 'short' })
-		return `Hoje, ${horarioFormatado}`
-	}
-	else {
-		const dataFormatada = data.toLocaleDateString('pt-BR', { dateStyle: 'short' })
-		const horarioFormatado = data.toLocaleTimeString('pt-BR', { timeStyle: 'short' })
-		return `${dataFormatada} ${horarioFormatado}`
-	}
-}
-
 watch(() => mensagensStore.getMensagens, async () => {
-	console.log(mensagensContainer.value.scrollTop)
 	if (mensagensContainer.value.scrollTop > 0 && mensagensContainer.value.scrollTop < 5) mensagensContainer.value.scrollTop = 0
 })
 </script>

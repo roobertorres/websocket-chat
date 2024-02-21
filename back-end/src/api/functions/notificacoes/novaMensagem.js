@@ -11,7 +11,8 @@ function notificarRemetente(id_mensagem, id_chat, id_usuario, texto_mensagem, da
 
             if (conexao) {
                 conexao.send(JSON.stringify({
-                    grupo: 'MENSAGEM_ENVIADA',
+                    grupo: 'MENSAGEM',
+                    tipo: 'ENVIADA',
                     mensagem: {
                         usuario_remetente: Number(id_usuario),
                         id_mensagem,
@@ -42,7 +43,8 @@ async function notificarDestinatario(id_mensagem, id_chat, id_usuario, texto_men
 
                 if (conexao) {
                     conexao.send(JSON.stringify({
-                        grupo: 'MENSAGEM_RECEBIDA',
+                        grupo: 'MENSAGEM',
+                        tipo: 'RECEBIDA',
                         mensagem: {
                             usuario_remetente: Number(id_usuario),
                             id_mensagem,
@@ -50,6 +52,7 @@ async function notificarDestinatario(id_mensagem, id_chat, id_usuario, texto_men
                             texto_mensagem,
                             nome_usuario_remetente: usuario[0].nome_usuario,
                             data_hora_mensagem,
+                            lida: 0,
                         }
                     }))
                 }

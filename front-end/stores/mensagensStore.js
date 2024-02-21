@@ -1,4 +1,5 @@
 import axios from '../custom/axios_instance.js'
+import { useWebsocketStore } from "./websocketStore.js";
 
 // Store de mensagens para o chat atualmente aberto
 export const useMensagensStore = defineStore('mensagensStore', {
@@ -7,6 +8,7 @@ export const useMensagensStore = defineStore('mensagensStore', {
         mensagens: new Map(),
         buscandoMensagens: false,
         totalMessagesDB: 0,
+        lastReadMessage: null,
     }),
     getters: {
         getChatParticipant: state => id_usuario => state.chatParticipants.get(id_usuario),
@@ -14,8 +16,21 @@ export const useMensagensStore = defineStore('mensagensStore', {
         getMensagem: state => id_mensagem => state.mensagens.get(id_mensagem),
         getMessagesCount: state => state.mensagens.size,
         getMessagesCountDB: state => state.totalMessagesDB,
+        getLastReadMessage: state => state.lastReadMessage,
     },
     actions: {
+        markMessagesAsRead(last_message_id) {
+            this.lastReadMessage = last_message_id
+        },
+        async registerMessagesAsRead(messages) {
+            useWebsocketStore().sendMessage({
+                grupo: 'MENSAGEM',
+                tipo: 'LIDA',
+                mensagens: messages,
+            })
+            
+            console.log(messages)
+        },
         async enviarMensagem(id_chat, mensagem) {
             try {
                 const { data } = await axios.post(`/chat/mensagens/${id_chat}`, {

@@ -54,7 +54,7 @@ export default {
 			})
 				.then(async (response) => {
 					this.mensagem_erro = ''
-					await navigateTo('/dashboard')
+					await navigateTo({ name: 'dashboard' })
 				})
 				.catch((error) => {
 					console.error(error)

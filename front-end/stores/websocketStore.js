@@ -1,5 +1,3 @@
-import { useFriendRequestsStore } from "./friendRequests.js";
-
 export const useWebsocketStore = defineStore('websocketStore', {
     state: () => ({
         socket: null,
@@ -39,30 +37,35 @@ export const useWebsocketStore = defineStore('websocketStore', {
                         useChatsStore().limparNotificacoes(mensagem.id_chat)
                     }
 
-                    if (mensagem.grupo === 'MENSAGEM_RECEBIDA') {
-
-                        if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
-                            useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
-                        }
-                        else {
-                            new Notification(mensagem.mensagem.nome_usuario_remetente, {
-                                body: mensagem.mensagem.texto_mensagem,
-                            })
-
-                            useChatsStore().adicionarNotificacao(mensagem.mensagem)
-                        }
-                    }
-
-                    if (mensagem.grupo === 'MENSAGEM_ENVIADA') {
-                        if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
-                            useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
-                        }
-                    }
-
                     if (mensagem.grupo === 'TOKEN_INVALIDO') {
                         this.socket = null
                         useUsuarioStore().setUsuario(null)
                         return navigateTo('/login')
+                    }
+
+                    if (mensagem.grupo === 'MENSAGEM') {
+                        switch (mensagem.tipo) {
+                            case 'RECEBIDA':
+                                if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
+                                    useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
+                                }
+                                else {
+                                    new Notification(mensagem.mensagem.nome_usuario_remetente, {
+                                        body: mensagem.mensagem.texto_mensagem,
+                                    })
+
+                                    useChatsStore().adicionarNotificacao(mensagem.mensagem)
+                                }
+                                break
+                            case 'ENVIADA':
+                                if (mensagem.mensagem.chat_mensagem == useRoute().params.id) {
+                                    useMensagensStore().adicionarMensagem(mensagem.mensagem.id_mensagem, mensagem.mensagem)
+                                }
+                                break
+                            case 'LIDA':
+                                useMensagensStore().markMessagesAsRead(mensagem.mensagem.id_mensagem)
+                                break
+                        }
                     }
 
                     if (mensagem.grupo === 'SOLICITACAO_AMIZADE') {
@@ -102,5 +105,8 @@ export const useWebsocketStore = defineStore('websocketStore', {
             this.socket.close()
             this.socket = null
         },
+        sendMessage(message) {
+            this.socket.send(JSON.stringify(message))
+        }
     }
 })

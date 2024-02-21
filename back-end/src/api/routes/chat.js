@@ -2,6 +2,7 @@ const router = require('express').Router()
 const db = require('../config/database.js')
 const notificacoes = require("../functions/notificacoes/novaMensagem")
 const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
+const notificarMensagemLida = require('../functions/notificacoes/mensagemLida.js')
 
 // get dos chats do usuário que retorna o id do chat, nome do outro usuário
 
@@ -68,16 +69,17 @@ router.post('/mensagens/:id_chat', async (req, res) => {
         await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = mensagens_nao_lidas + 1 WHERE chat_participante = ? AND usuario_participante != ?', [id_chat, id_usuario])
         await db.query('COMMIT')
 
-        const notificacoes = require('../functions/notificacoes/novaMensagem.js')
-        notificacoes.notificarRemetente(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
-        notificacoes.notificarDestinatario(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
-
         res.send({
             id_mensagem: mensagem.insertId,
             chat_mensagem: id_chat,
             texto_mensagem,
             data_hora_mensagem,
         })
+
+        const notificacoes = require('../functions/notificacoes/novaMensagem.js')
+        notificacoes.notificarRemetente(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
+        notificacoes.notificarDestinatario(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
+
     }
     catch (err) {
         console.error(err)
@@ -86,25 +88,44 @@ router.post('/mensagens/:id_chat', async (req, res) => {
     }
 })
 
-router.post('/mensagem/marcar-como-lida/:id_mensagem', async (req, res) => {
+router.patch('/mensagens/marcar-como-lidas', async (req, res) => {
     const { id_usuario } = req
-    const { id_mensagem } = req.params
+    const { messages } = req.body
 
-    if (!id_mensagem) return res.status(422).send({ mensagem: 'Informe o id da mensagem' })
+    if (!messages || !Array.isArray(messages)) return res.status(422).send({ mensagem: 'Informe as mensagens' })
+
+    let processed_messages = []
 
     try {
-        const [mensagem] = await db.query('SELECT chat_mensagem FROM mensagem WHERE id_mensagem = ?', [id_mensagem])
-        if (mensagem.length === 0) return res.status(404).send({ mensagem: 'Mensagem não encontrada' })
-
-        const [chat] = await db.query('SELECT chat_participante FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [mensagem[0].chat_mensagem, id_usuario])
-        if (chat.length === 0) return res.status(404).send({ mensagem: 'Chat não encontrado' })
-
         await db.query('START TRANSACTION')
-        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = 0 WHERE chat_participante = ? AND usuario_participante = ?', [mensagem[0].chat_mensagem, id_usuario])
-        await db.query('COMMIT')
-        res.send({ mensagem: 'Mensagem marcada como lida' })
+
+        for (const message of messages) {
+
+            const [verificar_participante] = await db.query('SELECT chat_mensagem FROM participante_chat WHERE chat_participante = (SELECT chat_mensagem FROM mensagem WHERE id_mensagem = ?) AND usuario_participante = ?', [message, id_usuario])
+
+            if (verificar_participante.length === 0) {
+                return processed_messages.push({
+                    id_mensagem: message,
+                    resultado: 'Chat não encontrado'
+                })
+            }
+
+            const [mensagem_lida] = await db.query('SELECT * FROM mensagem_lida WHERE mensagem_lida = ? AND usuario_participante_chat = ?', [message, verificar_participante[0].id_participante_chat])
+            if (mensagem_lida.length > 0) {
+                return processed_messages.push({
+                    id_mensagem: message,
+                    resultado: 'Mensagem já marcada como lida'
+                })
+            }
+
+            await db.execute('INSERT INTO mensagem_lida (mensagem_lida, usuario_participante_chat, data_hora_leitura) VALUES (?, ?, ?)', [message, verificar_participante[0].id_participante_chat, new Date()])
+            await db.query('COMMIT')
+
+            notificarMensagensLidas(messages)
+            res.send(processed_messages)
+        }
     }
-    catch (err) {
+    catch (error) {
         await db.query('ROLLBACK')
         console.error(err)
         res.status(500).send({ mensagem: 'Houve um erro ao marcar a mensagem como lida' })
@@ -139,9 +160,12 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 usuario_remetente,
                 texto_mensagem,
                 data_hora_mensagem,
-                excluida
+                excluida,
+                IFNULL(mensagem_lida.mensagem, false) AS lida
             FROM
                 mensagem
+            LEFT JOIN
+                mensagem_lida ON mensagem.id_mensagem = mensagem_lida.mensagem
             WHERE
                 chat_mensagem = ?
             AND
@@ -155,8 +179,6 @@ router.get('/mensagens/:id_chat', async (req, res) => {
             LIMIT
                 50
         `, [id_chat, last, last])
-
-        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = 0 WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
 
         res.setHeader('x-total-count', total_messages[0].count_messages || 0)
         res.send(messages)

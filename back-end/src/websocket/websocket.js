@@ -32,7 +32,8 @@ wss.on('connection', async (ws, req) => {
     }
 
     ws.on('message', (message) => {
-        console.log(message)
+        console.log(JSON.parse(message))
+        console.log('usuario', id_usuario)
     })
 
     ws.on('close', () => {

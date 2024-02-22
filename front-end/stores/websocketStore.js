@@ -63,7 +63,7 @@ export const useWebsocketStore = defineStore('websocketStore', {
                                 }
                                 break
                             case 'LIDA':
-                                useMensagensStore().markMessagesAsRead(mensagem.mensagem.id_mensagem)
+                                useMensagensStore().markMessagesAsRead(mensagem.mensagens)
                                 break
                         }
                     }

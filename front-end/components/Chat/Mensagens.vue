@@ -3,7 +3,8 @@
 	     ref="mensagensContainer">
 		<div class="messages-container flex flex-column">
 			<template v-for="(mensagem, index) in mensagensStore.getMensagens" :key="mensagem.id_mensagem">
-				<div class="flex gap-3 align-items-start"
+				<div class="flex gap-3 align-items-start message py-1 px-1 border-round"
+				     @contextmenu="onRightClick($event, mensagem.id_mensagem)"
 				     :class="{ 'mt-3': (!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)) && index !== 0}"
 				     :ref="el => {if (el) addObserver(el, mensagem)}">
 					<div class="avatar-container">
@@ -13,33 +14,23 @@
 							shape="circle"
 							size="normal"/>
 					</div>
-					<div class="message">
-						<div v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
-						     class="flex gap-2 align-items-center">
+					<div :class="{ 'pl-5': messageMarginLeft(mensagem)  }" class="flex-1">
+						<div
+							v-if="!mensagemAnteriorMesmoRemetente(mensagem) || !mensagemAnteriorMesmoMinuto(mensagem)"
+							class="flex gap-2 align-items-center">
 							<p class="m-0">
 								<b>{{ remetentUserName(mensagem.usuario_remetente) }}</b>
 							</p>
 							<ChatMensagensDataHoraMensagem :data="mensagem.data_hora_mensagem"/>
 						</div>
-						<div class="mt-1 flex flex-column">
-							<div class="mt-1 flex flex-column">
-								<p class="m-0" :class="{ 'ml-5': messageMarginLeft(mensagem)  }">
-									<template v-if="!mensagem.excluida">
-										{{ mensagem.texto_mensagem }}
-									</template>
-								</p>
-							</div>
+						<div class="flex flex-column">
+							<p class="m-0" style="word-break: break-word">
+								<template v-if="!mensagem.excluida">
+									<span>{{ mensagem.texto_mensagem }}</span>
+									<small v-if="mensagem.lida" style="color: deepskyblue"> ✓</small>
+								</template>
+							</p>
 						</div>
-						<!--						<small>{{ mensagem.lida ? 'Lida!' : 'Não lida' }}</small>-->
-					</div>
-					<div class="flex h-full align-items-end gap-2">
-						<!--						<small style="color: darkgray; white-space: nowrap;"-->
-						<!--						       v-if="mensagem.lida">-->
-						<!--							✓ Lida-->
-						<!--						</small>-->
-						<small>{{ mensagem.id_mensagem }}</small>
-
-						<small>{{ mensagem.lida }}</small>
 					</div>
 				</div>
 			</template>
@@ -48,43 +39,87 @@
 		        :label="mensagensStore.buscandoMensagens ? 'Buscando...' : 'Carregar mais'" class="w-2 m-auto"
 		        :loading="mensagensStore.buscandoMensagens"
 		        @click="mensagensStore.buscarMensagens()" size="small" text/>
-		<!--		<div v-else-if="!mensagensStore.buscandoMensagens" id="elemento">-->
 		<div id="elemento">
 			<h3>Este é o início desta conversa.</h3>
 			<Divider/>
 		</div>
 	</div>
+	<ContextMenu ref="menu" :model="messageOptions">
+		<template #item="{ item, props }">
+			<a v-ripple class="flex align-items-center" v-bind="props.action">
+				<span :class="item.icon"/>
+				<span class="ml-2">{{ item.label }}</span>
+				<Badge v-if="item.badge" class="ml-auto" :value="item.badge"/>
+				<span v-if="item.shortcut" class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">{{
+						item.shortcut
+					}}</span>
+				<i v-if="item.items" class="pi pi-angle-right ml-auto"></i>
+			</a>
+		</template>
+	</ContextMenu>
 </template>
 
 <script setup>
 const mensagensContainer = ref(null)
 const mensagensStore = useMensagensStore()
 
-let readMessages = ref([])
+const menu = ref(null)
+const selectedId = ref(null)
+
+const onRightClick = (event, id) => {
+	selectedId.value = id
+	menu.value.show(event)
+};
+
+const messageOptions = ref([
+	{
+		label: 'Lida em ...',
+		disabled: true,
+		icon: 'pi pi-eye',
+
+	},
+	{
+		separator: true,
+	},
+	{
+		label: 'Excluir',
+		icon: 'pi pi-trash',
+	},
+])
+
+let readMessages = new Map()
 
 let timeout = null
 
 const markMessageAsRead = (id_mensagem) => {
-	readMessages.value.push(id_mensagem)
+	readMessages.set(id_mensagem)
 
 	if (timeout) {
 		clearTimeout(timeout)
-		timeout = null
 	}
 
 	timeout = setTimeout(() => {
-		useMensagensStore().registerMessagesAsRead(readMessages.value)
-		console.log(readMessages.value.length, 'mensagens enviadas para o servidor')
-		readMessages.value = []
+		useMensagensStore().registerMessagesAsRead(Array.from(readMessages.keys()))
+		readMessages.clear()
 		timeout = null
 	}, 2000)
+
 }
 
 const addObserver = (el, mensagem) => {
 	const observer = new IntersectionObserver((entries) => {
 		entries.forEach(entry => {
-			if (entry.isIntersecting && mensagem.lida == 0) {
-				markMessageAsRead(mensagem.id_mensagem)
+			if (mensagem.lida === 0 && mensagem.usuario_remetente !== useUsuarioStore().getUsuarioId) {
+				if (entry.isIntersecting) {
+					markMessageAsRead(mensagem.id_mensagem)
+				}
+				else {
+					// Not visible
+					if (entry.boundingClientRect.top < 0) {
+						// Top of the element is above the viewport
+						markMessageAsRead(mensagem.id_mensagem)
+					}
+				}
 			}
 		})
 	}, {
@@ -109,6 +144,12 @@ onMounted(async () => {
 onBeforeUnmount(() => {
 	mensagensContainer.value.removeEventListener('scroll', handleScroll)
 })
+
+const timeMessageSeen = (time) => {
+	return time ? new Date(time).toLocaleTimeString('pt-BR', {
+		timeStyle: 'short',
+	}) : 'Não lida'
+}
 
 const messageMarginLeft = (message) => {
 	if (mensagemAnteriorMesmoRemetente(message) && !mensagemAnteriorMesmoMinuto(message)) {
@@ -177,6 +218,8 @@ watch(() => mensagensStore.getMensagens, async () => {
 .chat-messages {
 	padding-right: 1rem;
 	flex-direction: column-reverse;
+	overflow-y: auto;
+	overflow-x: hidden;
 
 	&::-webkit-scrollbar-track {
 		background-color: var(--surface-200);

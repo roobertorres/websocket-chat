@@ -8,7 +8,6 @@ export const useMensagensStore = defineStore('mensagensStore', {
         mensagens: new Map(),
         buscandoMensagens: false,
         totalMessagesDB: 0,
-        lastReadMessage: null,
     }),
     getters: {
         getChatParticipant: state => id_usuario => state.chatParticipants.get(id_usuario),
@@ -16,20 +15,22 @@ export const useMensagensStore = defineStore('mensagensStore', {
         getMensagem: state => id_mensagem => state.mensagens.get(id_mensagem),
         getMessagesCount: state => state.mensagens.size,
         getMessagesCountDB: state => state.totalMessagesDB,
-        getLastReadMessage: state => state.lastReadMessage,
     },
     actions: {
-        markMessagesAsRead(last_message_id) {
-            this.lastReadMessage = last_message_id
+        markMessagesAsRead(messages) {
+            messages.forEach(message => {
+                this.mensagens.get(message.id_mensagem).lida = 1
+                this.mensagens.get(message.id_mensagem).data_hora_leitura = message.data_hora_leitura
+            })
         },
         async registerMessagesAsRead(messages) {
-            useWebsocketStore().sendMessage({
-                grupo: 'MENSAGEM',
-                tipo: 'LIDA',
-                mensagens: messages,
-            })
-            
-            console.log(messages)
+            try {
+                const { data } = await axios.patch('/chat/mensagens/lidas', { messages })
+                data.forEach(message => this.mensagens.get(message.id_mensagem).lida = 1)
+            }
+            catch (error) {
+                console.error(error)
+            }
         },
         async enviarMensagem(id_chat, mensagem) {
             try {

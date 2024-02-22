@@ -2,7 +2,7 @@ const router = require('express').Router()
 const db = require('../config/database.js')
 const notificacoes = require("../functions/notificacoes/novaMensagem")
 const limparNotificacoesChat = require('../functions/notificacoes/limparNotificacoesChat.js')
-const notificarMensagemLida = require('../functions/notificacoes/mensagemLida.js')
+const notificarMensagensLidas = require('../functions/notificacoes/mensagemLida.js')
 
 // get dos chats do usuário que retorna o id do chat, nome do outro usuário
 
@@ -64,9 +64,6 @@ router.post('/mensagens/:id_chat', async (req, res) => {
 
         // Atualizar o id da última mensagem do chat
         await db.execute('UPDATE chat SET last_message_id = ? WHERE id_chat = ? ', [mensagem.insertId, id_chat])
-
-        // Atualizar o número de mensagens não lidas
-        await db.execute('UPDATE participante_chat SET mensagens_nao_lidas = mensagens_nao_lidas + 1 WHERE chat_participante = ? AND usuario_participante != ?', [id_chat, id_usuario])
         await db.query('COMMIT')
 
         res.send({
@@ -81,14 +78,14 @@ router.post('/mensagens/:id_chat', async (req, res) => {
         notificacoes.notificarDestinatario(mensagem.insertId, id_chat, id_usuario, texto_mensagem, data_hora_mensagem)
 
     }
-    catch (err) {
-        console.error(err)
+    catch (error) {
+        console.error(error)
         await db.query('ROLLBACK')
         res.status(500).send({ mensagem: 'Houve um erro ao enviar a mensagem' })
     }
 })
 
-router.patch('/mensagens/marcar-como-lidas', async (req, res) => {
+router.patch('/mensagens/lidas', async (req, res) => {
     const { id_usuario } = req
     const { messages } = req.body
 
@@ -101,33 +98,35 @@ router.patch('/mensagens/marcar-como-lidas', async (req, res) => {
 
         for (const message of messages) {
 
-            const [verificar_participante] = await db.query('SELECT chat_mensagem FROM participante_chat WHERE chat_participante = (SELECT chat_mensagem FROM mensagem WHERE id_mensagem = ?) AND usuario_participante = ?', [message, id_usuario])
+            const [mensagem] = await db.query('SELECT id_mensagem, chat_mensagem, usuario_remetente FROM mensagem WHERE id_mensagem = ?', [message])
+            if (mensagem.length === 0) continue
 
-            if (verificar_participante.length === 0) {
-                return processed_messages.push({
+            const [participante_chat] = await db.query('SELECT id_participante_chat FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [mensagem[0].chat_mensagem, id_usuario])
+            if (participante_chat.length === 0) continue
+
+            const [mensagem_lida] = await db.query('SELECT * FROM mensagem_lida WHERE mensagem = ? AND usuario_participante_chat = ?', [message, participante_chat[0].id_participante_chat])
+            if (mensagem_lida.length > 0) continue
+
+            const now = new Date()
+
+            const [inserir_mensagem_lida] = await db.execute('INSERT INTO mensagem_lida (mensagem, usuario_participante_chat, data_hora_leitura) VALUES (?, ?, ?)', [message, participante_chat[0].id_participante_chat, now])
+            if (inserir_mensagem_lida.affectedRows === 1) {
+                processed_messages.push({
                     id_mensagem: message,
-                    resultado: 'Chat não encontrado'
+                    usuario_remetente: mensagem[0].usuario_remetente,
+                    data_hora_leitura: now,
                 })
             }
-
-            const [mensagem_lida] = await db.query('SELECT * FROM mensagem_lida WHERE mensagem_lida = ? AND usuario_participante_chat = ?', [message, verificar_participante[0].id_participante_chat])
-            if (mensagem_lida.length > 0) {
-                return processed_messages.push({
-                    id_mensagem: message,
-                    resultado: 'Mensagem já marcada como lida'
-                })
-            }
-
-            await db.execute('INSERT INTO mensagem_lida (mensagem_lida, usuario_participante_chat, data_hora_leitura) VALUES (?, ?, ?)', [message, verificar_participante[0].id_participante_chat, new Date()])
-            await db.query('COMMIT')
-
-            notificarMensagensLidas(messages)
-            res.send(processed_messages)
         }
+
+        notificarMensagensLidas(processed_messages)
+
+        await db.query('COMMIT')
+        res.send(processed_messages)
     }
     catch (error) {
         await db.query('ROLLBACK')
-        console.error(err)
+        console.error(error)
         res.status(500).send({ mensagem: 'Houve um erro ao marcar a mensagem como lida' })
     }
 })
@@ -152,7 +151,6 @@ router.get('/mensagens/:id_chat', async (req, res) => {
         WHERE
             id_chat = ?
         `, [id_chat])
-        console.log('Total de mensagens', total_messages[0].count_messages)
 
         const [messages] = await db.execute(`
             SELECT
@@ -161,7 +159,8 @@ router.get('/mensagens/:id_chat', async (req, res) => {
                 texto_mensagem,
                 data_hora_mensagem,
                 excluida,
-                IFNULL(mensagem_lida.mensagem, false) AS lida
+                mensagem_lida.mensagem AS lida,
+                mensagem_lida.data_hora_leitura
             FROM
                 mensagem
             LEFT JOIN
@@ -181,7 +180,17 @@ router.get('/mensagens/:id_chat', async (req, res) => {
         `, [id_chat, last, last])
 
         res.setHeader('x-total-count', total_messages[0].count_messages || 0)
-        res.send(messages)
+        res.send(messages.map(message => {
+            return {
+                id_mensagem: message.id_mensagem,
+                usuario_remetente: message.usuario_remetente,
+                texto_mensagem: message.texto_mensagem,
+                data_hora_mensagem: message.data_hora_mensagem,
+                excluida: message.excluida,
+                lida: message.lida ? 1 : 0,
+                data_hora_leitura: message.data_hora_leitura,
+            }
+        }))
 
         const { clear_notifications } = req.query
 

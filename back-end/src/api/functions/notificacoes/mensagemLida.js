@@ -5,35 +5,34 @@ module.exports = async function notificarMensagensLidas(messages) {
 
     const remetentes = new Map()
 
-    for (const id_mensagem of messages) {
-        const sender = await fetchMessageSender(id_mensagem)
+    for (const mensagem of messages) {
 
-        if (remetentes.has(sender)) {
-            remetentes.get(sender).push(id_mensagem)
+        if (remetentes.has(mensagem.usuario_remetente)) {
+            remetentes.get(mensagem.usuario_remetente).push(mensagem)
         }
         else {
-            remetentes.set(sender, [id_mensagem])
+            remetentes.set(mensagem.usuario_remetente, [mensagem])
         }
     }
 
-    const ws = clients.get(id_usuario)
+    for (const [id_usuario, mensagens] of remetentes) {
 
-    if (ws) {
-        ws.forEach((conexao) => {
-            if (conexao) {
-                conexao.send(JSON.stringify({
-                    grupo: 'MENSAGEM',
-                    tipo: 'LIDA',
-                    mensagem: {
-                        id_mensagem: Number(id_mensagem)
-                    }
-                }))
-            }
-        })
+        const ws = clients.get(id_usuario)
+
+        if (ws) {
+            console.log('conexão encontrada')
+            ws.forEach((conexao) => {
+                if (conexao) {
+                    conexao.send(JSON.stringify({
+                        grupo: 'MENSAGEM',
+                        tipo: 'LIDA',
+                        mensagens,
+                    }))
+                }
+            })
+        }
+        else {
+            console.log('nenhuma conexão encontrada')
+        }
     }
-}
-
-async function fetchMessageSender(id_mensagem) {
-    const [sender] = await db.query('SELECT usuario_remetente FROM mensagem WHERE id_mensagem = ?', [id_mensagem])
-    return sender[0].id_usuario_remetente
 }

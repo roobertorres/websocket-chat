@@ -1,5 +1,5 @@
 <template>
-	<Card v-if="friendRequests.getNewFriendRequests > 0">
+	<Card v-if="friendRequests.getFriendRequestQuantity >0">
 		<template #content>
 			<div class="field flex align-items-center justify-content-between">
 				<div>

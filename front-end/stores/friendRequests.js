@@ -3,11 +3,10 @@ import axios from '../custom/axios_instance.js'
 export const useFriendRequestsStore = defineStore('friendRequests', {
     state: () => ({
         friendRequests: new Map(),
-        newFriendRequests: 0,
     }),
     getters: {
         getFriendRequests: (state) => Array.from(state.friendRequests.values()),
-        getNewFriendRequests: (state) => Number(state.newFriendRequests),
+        getFriendRequestQuantity: (state) => state.getFriendRequests.length,
     },
     actions: {
         async fetchFriendRequests() {
@@ -58,8 +57,8 @@ export const useFriendRequestsStore = defineStore('friendRequests', {
             const exists = this.friendRequests.get(request.id_solicitacao_amizade)
             if (exists) return
 
-            this.friendRequests.set(request.id_solicitacao_amizade, request)
             this.newFriendRequests++
+            this.friendRequests.set(request.id_solicitacao_amizade, request)
 
             new Notification('WS Chat', {
                 body: `${request.nome_usuario_solicitante} enviou uma solicitação de amizade!`

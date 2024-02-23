@@ -36,8 +36,8 @@ async function notificarSolicitacaoAceita(id) {
     }
 }
 
-function notificarUsuario(id, grupo, tipo, solicitacao) {
-    const ws = clients.get(id)
+function notificarUsuario(id_usuario, grupo, tipo, solicitacao) {
+    const ws = clients.get(id_usuario)
 
     if (ws) {
         ws.forEach((conexao) => {

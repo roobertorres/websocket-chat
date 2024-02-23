@@ -211,7 +211,7 @@ router.get('/participantes/:id_chat', async (req, res) => {
     if (!id_chat) return res.status(400).send({ mensagem: 'Informe o id do chat' })
 
     const [verificar_participante] = await db.query('SELECT * FROM participante_chat WHERE chat_participante = ? AND usuario_participante = ?', [id_chat, id_usuario])
-    if (verificar_participante.length === 0) return res.status(400).send({ mensagem: 'Chat não encontrado' })
+    if (verificar_participante.length === 0) return res.status(404).send({ mensagem: 'Chat não encontrado' })
 
     try {
         const [participantes] = await db.query(`

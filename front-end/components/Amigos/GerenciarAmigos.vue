@@ -2,9 +2,9 @@
 	<Card>
 		<template #content>
 			<div class="field flex align-items-center justify-content-between">
-				<h3 class="m-0">Gerenciar amigos</h3>
-				<InputText v-if="useAmigosStore().getAmigos" icon="pi pi-user" placeholder="Buscar usuário"
-				           size="small"/>
+				<h3 class="m-0">Seus amigos</h3>
+				<!--				<InputText v-if="useAmigosStore().getAmigos" icon="pi pi-user" placeholder="Buscar usuário"-->
+				<!--				           size="small"/>-->
 			</div>
 			<!--			<pre>{{ useAmigosStore().getAmigos }}</pre>-->
 			<div class="flex flex-column gap-3">

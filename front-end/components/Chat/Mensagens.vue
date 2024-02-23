@@ -27,7 +27,7 @@
 							<p class="m-0" style="word-break: break-word">
 								<template v-if="!mensagem.excluida">
 									<span>{{ mensagem.texto_mensagem }}</span>
-									<small v-if="mensagem.lida" style="color: deepskyblue"> ✓</small>
+									<small v-if="mensagem.lida && mensagem.usuario_remetente === useUsuarioStore().getUsuarioId" style="color: deepskyblue"> ✓</small>
 								</template>
 							</p>
 						</div>

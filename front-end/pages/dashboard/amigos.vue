@@ -6,9 +6,7 @@
 		<AmigosAdicionarAmigos/>
 		<AmigosSolicitacoesAmizade/>
 		<AmigosGerenciarAmigos/>
-		<pre>
-		    {{ $router.getRoutes() }}
-	    </pre>
+
 	</div>
 </template>
 

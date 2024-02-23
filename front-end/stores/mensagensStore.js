@@ -19,6 +19,9 @@ export const useMensagensStore = defineStore('mensagensStore', {
     actions: {
         markMessagesAsRead(messages) {
             messages.forEach(message => {
+                const exists = this.mensagens.get(message.id_mensagem)
+                if (!exists) return
+                
                 this.mensagens.get(message.id_mensagem).lida = 1
                 this.mensagens.get(message.id_mensagem).data_hora_leitura = message.data_hora_leitura
             })

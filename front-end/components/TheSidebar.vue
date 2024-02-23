@@ -1,5 +1,5 @@
 <template>
-	<div class="the-sidebar w-18rem flex surface-0 p-3">
+	<div class="the-sidebar w-18rem flex surface-0 p-3 border-round ml-3 my-3">
 		<div class="flex-1 flex flex-column justify-content-between w-full gap-3">
 			<div class="flex flex-column gap-3 flex-1" style="overflow: hidden">
 				<div class="sidebar-header flex flex-column gap-1">
@@ -9,6 +9,7 @@
 					<small>Gerenciar</small>
 					<hr style="border-color: var(--surface-0); width: 100%" class="m-0">
 					<div class="link-group">
+						<SidebarAccountLink/>
 						<SidebarAmigosLink/>
 					</div>
 				</div>

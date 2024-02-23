@@ -2,7 +2,7 @@
 	<div class="dashboard-layout flex h-full">
 		<Toast position="bottom-center"/>
 		<TheSidebar/>
-		<NuxtPage class="dashboard-page flex-1 p-4" style="min-height: 0"/>
+		<NuxtPage class="dashboard-page flex-1 p-3" style="min-height: 0"/>
 		<TheWebSocket/>
 		<TheNotificationsPermission/>
 		<TheLoader/>

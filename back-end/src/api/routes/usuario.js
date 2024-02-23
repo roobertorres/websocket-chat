@@ -120,6 +120,7 @@ router.post('/solicitacao-amizade/recusar/:id_solicitacao_amizade', async (req, 
 
         await db.query('START TRANSACTION')
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 0 WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
+        await db.execute('UPDATE usuario SET quantidade_solicitacoes_amizade = quantidade_solicitacoes_amizade -1 WHERE id_usuario = ?', [id_usuario])
         await db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade recusada' })
 
@@ -166,8 +167,9 @@ router.post('/solicitacao-amizade/aceitar/:id_solicitacao_amizade', async (req, 
         }
 
         await db.execute('UPDATE solicitacao_amizade SET pendente = 0, ativo = 1, amigos_desde = ?, private_chat = ? WHERE id_solicitacao_amizade = ?', [new Date(), chat_id, id_solicitacao_amizade])
+        await db.execute('UPDATE usuario SET quantidade_solicitacoes_amizade = quantidade_solicitacoes_amizade -1 WHERE id_usuario = ?', [id_usuario])
         await db.query('COMMIT')
-        
+
         res.send({ mensagem: 'Solicitação de amizade aceita' })
 
         try {
@@ -196,6 +198,7 @@ router.delete('/solicitacoes-amizade/cancelar/:id_solicitacao_amizade', async (r
 
         await db.query('START TRANSACTION')
         await db.execute('DELETE FROM solicitacao_amizade WHERE id_solicitacao_amizade = ?', [id_solicitacao_amizade])
+        await db.execute('UPDATE usuario SET quantidade_solicitacoes_amizade = quantidade_solicitacoes_amizade -1 WHERE id_usuario = ?', [solicitacao_amizade[0].usuario_solicitado])
         res.send({ mensagem: 'Solicitação de amizade cancelada' })
 
         try {
@@ -257,7 +260,7 @@ router.get('/solicitacoes-amizade/quantidade', async (req, res) => {
     const { id_usuario } = req
 
     try {
-        const [quantidade] = await db.query('SELECT COUNT(*) AS quantidade FROM solicitacao_amizade WHERE usuario_solicitado = ? AND pendente = 1', [id_usuario])
+        const [quantidade] = await db.query('SELECT quantidade_solicitacoes_amizade AS quantidade FROM usuario WHERE id_usuario = ?', [id_usuario])
         res.send({ quantidade: quantidade[0].quantidade })
     }
     catch (err) {
@@ -293,6 +296,7 @@ router.post('/solicitar-amizade', async (req, res) => {
     try {
         await db.query('START TRANSACTION')
         const [result] = await db.execute('INSERT INTO solicitacao_amizade (usuario_solicitante, usuario_solicitado) VALUES (?, ?)', [id_usuario, usuario[0].id_usuario])
+        await db.execute('UPDATE usuario SET quantidade_solicitacoes_amizade = quantidade_solicitacoes_amizade +1 WHERE id_usuario = ?', [usuario[0].id_usuario])
         await db.query('COMMIT')
         res.send({ mensagem: 'Solicitação de amizade enviada.' })
 

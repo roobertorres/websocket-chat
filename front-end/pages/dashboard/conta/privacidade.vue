@@ -4,6 +4,6 @@
 
 <script setup>
 definePageMeta({
-	name: 'Acesso e Segurança',
+	name: 'Privacidade',
 })
 </script>

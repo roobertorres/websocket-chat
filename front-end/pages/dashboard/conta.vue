@@ -1,31 +1,31 @@
 <template>
-	<div class="flex flex-column gap-3">
+	<div class="account-page flex flex-column gap-3">
 		<div class="page-title">
 			<h2 class="mb-0">Conta</h2>
 		</div>
-		<div class="page-content flex-1" style="border: 1px solid red">
-			<Card class="">
+		<div class="page-content flex-1 flex" style="border: 1px solid red">
+			<Card class="flex-1">
 				<template #content>
 					<div class="flex gap-5 px-2">
 						<div class="account-links flex flex-column gap-2 border-200">
-							<NuxtLink :to="{name: 'dashboard-conta-perfil'}" activeClass="surface-200"
+							<NuxtLink :to="{name: 'Perfil'}" activeClass="surface-200"
 							          class="link-button border-round">
 								<span>Perfil</span>
 							</NuxtLink>
-							<NuxtLink :to="{name: 'dashboard-conta-acesso-e-seguranca'}" activeClass="surface-200"
+							<NuxtLink :to="{name: 'Acesso e Segurança'}" activeClass="surface-200"
 							          class="link-button border-round">
 								<span>Acesso e Segurança</span>
 							</NuxtLink>
-							<NuxtLink :to="{name: 'dashboard-conta-privacidade-e-amigos'}" activeClass="surface-200"
+							<NuxtLink :to="{name: 'Privacidade'}" activeClass="surface-200"
 							          class="link-button border-round">
 								<span>Privacidade e Amigos</span>
 							</NuxtLink>
-							<NuxtLink :to="{name: 'dashboard-conta-configuracoes'}" activeClass="surface-200"
+							<NuxtLink :to="{name: 'Configurações'}" activeClass="surface-200"
 							          class="link-button border-round">
 								<span>Configurações</span>
 							</NuxtLink>
 						</div>
-						<div class="surface-100 border-round py-1 px-3 flex-1">
+						<div class="surface-100 border-round py-4 px-4 flex-1">
 							<NuxtPage/>
 						</div>
 					</div>
@@ -36,27 +36,31 @@
 </template>
 
 <style scoped lang="scss">
-.account-links {
-	.link-button {
-		transition: all .1s ease-in-out;
-		border-left: 0 solid transparent;
-		padding: .5rem .8rem;
+.account-page {
 
-		&:hover {
-			background-color: var(--surface-100);
-		}
+	.account-links {
+		.link-button {
+			transition: all .1s ease-in-out;
+			border-left: 0 solid transparent;
+			padding: .5rem .8rem;
 
-		&.link-active {
-			border-left: 5px solid var(--p-error);
+			&:hover {
+				background-color: var(--surface-100);
+			}
+
+			&.link-active {
+				border-left: 5px solid var(--p-error);
+			}
 		}
 	}
 }
+
 </style>
 
 <script setup>
 definePageMeta({
 	layout: 'dashboard',
-	redirect: { name: 'dashboard-conta-perfil' },
+	redirect: { name: 'Perfil' },
 })
 
 </script>

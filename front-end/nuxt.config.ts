@@ -6,8 +6,8 @@ export default defineNuxtConfig({
         head: {
             title: 'WebSocket Chat',
             meta: [
-                { charset: 'utf-8' },
-                { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+                {charset: 'utf-8'},
+                {name: 'viewport', content: 'width=device-width, initial-scale=1'}
             ]
         }
     },
@@ -24,6 +24,7 @@ export default defineNuxtConfig({
         // Packages
         'primeflex/primeflex.css',
         'primevue/resources/themes/lara-dark-blue/theme.css',
-        'primeicons/primeicons.css'
+        'primeicons/primeicons.css',
+        'cropperjs/dist/cropper.min.css',
     ],
 })

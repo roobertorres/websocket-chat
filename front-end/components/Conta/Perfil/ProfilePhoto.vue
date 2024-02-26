@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="profile-photo-component">
 		<div class="w-full flex gap-4 align-items-center">
 			<div class="profile-photo-container flex align-items-center justify-content-center">
 				<img src="/images/profile-photo-placeholder.png" class="account-profile-photo w-7rem h-7rem"
@@ -17,9 +17,12 @@
 			        @click="previewPhoto.src = './images/profile-photo-placeholder.png'"/>
 		</div>
 		<Dialog v-model:visible="modalCropPhotoVisible" modal header="Ajustar foto" :draggable="false">
-			<div class="flex flex-column justify-content-center">
-				<img ref="profilePhotoCanvas" alt="" style="width: 20rem; height: 20rem"/>
-				<Slider v-model="zoom" class="w-full mt-3" :min="0.1" :max="2" :step="0.01"/>
+			<div class="flex flex-column justify-content-center" style="border: 1px solid red">
+				<div style="width: 20rem; height: 20rem">
+
+					<img ref="profilePhotoCanvas" alt="" style="width: 20rem; height: 20rem"/>
+				</div>
+				<Slider v-model="zoom" class="w-full mt-3" :min="-1" :max="2" :step="0.01"/>
 				<div class="flex gap-3 mt-3">
 					<Button icon="pi pi-replay" size="small" @click="cropper.rotate(-90)"/>
 					<Button icon="pi pi-refresh" size="small" @click="cropper.rotate(90)"/>
@@ -94,10 +97,8 @@ const handleFileUpload = async (event) => {
 						dragMode: 'move',
 						highlight: false,
 						autoCropArea: 1,
-						cropBoxMovable: false,
+						// cropBoxMovable: false,
 						cropBoxResizable: false,
-						width: '75rem',
-						height: '75rem',
 					})
 
 					processing.value = false
@@ -117,9 +118,21 @@ const handleFileUpload = async (event) => {
 }
 </script>
 
+<style lang="scss">
+.cropper-view-box,
+.cropper-face {
+	border-radius: 50%;
+}
+
+/* The css styles for `outline` do not follow `border-radius` on iOS/Safari (#979). */
+.cropper-view-box {
+	outline: 0;
+	box-shadow: 0 0 0 1px #39f;
+}
+
+</style>
+
 <style scoped lang="scss">
-
-
 .profile-photo-container {
 	position: relative;
 

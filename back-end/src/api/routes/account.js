@@ -48,7 +48,7 @@ router.patch('/profile', async (req, res) => {
         const photoPath = path.join(__dirname, `../../public/images/user-profile-photo/${id_usuario}.png`)
         fs.writeFile(photoPath, photo.replace(/^data:image\/png;base64,/, ""), { encoding: 'base64' }, (error) => {
             if (error) {
-                res.status(500).send('Erro ao salvar imagem')
+                return res.status(500).send('Erro ao salvar imagem')
             }
         })
     }

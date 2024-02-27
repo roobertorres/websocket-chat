@@ -2,7 +2,9 @@ const { WebSocketServer } = require('ws')
 const cookieParser = require('cookie-parser')
 const verificarJWT = require('../api/functions/verificarJWT.js')
 
-const wss = new WebSocketServer({ port: 8080 }, () => console.log('Servidor WebSocket rodando na porta 8080'))
+PORT_WS= process.env.PORT_WS
+
+const wss = new WebSocketServer({ port: PORT_WS }, () => console.log('Servidor WebSocket rodando na porta ' + PORT_WS))
 
 const clients = new Map()
 

@@ -38,16 +38,29 @@ export const useChatsStore = defineStore('chatsStore', {
             this.buscandoChats = true
             const { data } = await axios.get(`/chat`)
 
-            data.forEach(item => {
+            data.forEach(async (item) => {
+                let profile_photo
+
+                try {
+                    const { data } = await axios.get(`usuario/profile-photo/${item.id_usuario}`)
+                    profile_photo = data.photo
+                }
+                catch (error) {
+                    profile_photo = null
+                }
+
                 this.chats.set(item.id_chat, {
                     ...item,
                     notificacoes: 0,
+                    profile_photo,
                 })
 
-                this.chatUsers.set(item.id_usuario, {
-                    id_usuario: item.id_usuario,
-                    nome_usuario: item.nome_usuario,
-                })
+
+                // this.chatUsers.set(item.id_usuario, {
+                //     id_usuario: item.id_usuario,
+                //     nome_usuario: item.nome_usuario,
+                //     profile_photo,
+                // })
             })
 
             this.buscandoChats = false

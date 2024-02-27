@@ -1,3 +1,6 @@
+# Users profile photos
+src/public/images/user-profile-photo
+
 # Logs
 logs
 *.log

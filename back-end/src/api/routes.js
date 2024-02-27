@@ -6,6 +6,7 @@ router.use('/criar-conta', require('./routes/criar-conta.js'))
 router.use('/logout', require('./middlewares/auth.js'), require('./routes/logout.js'))
 router.use('/usuario', require('./middlewares/auth.js'), require('./routes/usuario.js'))
 router.use('/chat', require('./middlewares/auth.js'), require('./routes/chat.js'))
+router.use('/account', require('./middlewares/auth.js'), require('./routes/account.js'))
 
 // Rota não encontrada
 router.use((req, res, next) => {

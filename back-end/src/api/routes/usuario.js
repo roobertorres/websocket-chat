@@ -1,6 +1,8 @@
 const router = require('express').Router()
 const db = require('../config/database.js')
 const notificacoesSolicitacaoAmizade = require('../functions/notificacoes/solicitacaoAmizade.js')
+const path = require("path");
+const fs = require("fs");
 
 router.get('/amigos', async (req, res) => {
     const { id_usuario } = req
@@ -319,11 +321,48 @@ router.get('/dados', async (req, res) => {
 
     try {
         const [usuario] = await db.query('SELECT id_usuario, nome_usuario, email, status, data_cadastro FROM usuario WHERE id_usuario = ?', [id_usuario])
-        res.send(usuario[0])
+        if (usuario.length === 0) return res.status(404).send({ mensagem: 'Usuário não encontrado' })
+
+        let base64Image = null
+        const photoPath = path.join(__dirname, `../../public/images/user-profile-photo/${id_usuario}.png`)
+
+        try {
+            const data = await fs.readFileSync(photoPath)
+            base64Image = 'data:image/png;base64,' + Buffer.from(data).toString('base64')
+        }
+        catch (error) {
+            base64Image = null
+        }
+
+        res.send({
+            ...usuario[0],
+            photo: base64Image
+        })
     }
     catch (err) {
         console.error(err)
         res.status(500).send({ mensagem: 'Houve um erro ao buscar os dados do usuário' })
+    }
+})
+
+router.get('/profile-photo/:id', async (req, res) => {
+    const { id_usuario } = req
+    const { id } = req.params
+
+    const [usuario] = await db.query('SELECT id_usuario FROM usuario WHERE id_usuario = ?', [id_usuario])
+    if (usuario.length === 0) return res.status(404).send({ mensagem: 'Usuário não encontrado' })
+
+    const [usuario_foto] = await db.query('SELECT id_usuario FROM usuario WHERE id_usuario = ?', [id])
+    if (usuario_foto.length === 0) return res.status(404).send({ mensagem: 'A foto solicitada não pertence a nenhum usuário' })
+
+    try {
+        const photoPath = path.join(__dirname, `../../public/images/user-profile-photo/${id}.png`)
+        const data = await fs.readFileSync(photoPath)
+        const base64Image = 'data:image/png;base64,' + Buffer.from(data).toString('base64')
+        res.send({ photo: base64Image })
+    }
+    catch (error) {
+        res.status(200).send({ photo: null })
     }
 })
 

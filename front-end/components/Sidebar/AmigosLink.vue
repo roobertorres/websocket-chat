@@ -5,7 +5,7 @@
 			<i class="pi pi-users"/>
 			<p class="m-0 text-md">Amigos</p>
 		</div>
-		<Badge v-show="friends.getNewFriendRequests > 0" :value="friends.getNewFriendRequests" severity="danger"/>
+		<Badge v-if="friends.getFriendRequestQuantity > 0" :value="friends.getFriendRequestQuantity" severity="danger"/>
 	</NuxtLink>
 </template>
 

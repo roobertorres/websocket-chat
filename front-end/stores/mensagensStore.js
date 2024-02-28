@@ -116,7 +116,11 @@ export const useMensagensStore = defineStore('mensagensStore', {
                 const { data } = await axios.get(`/chat/participantes/${id_chat}`)
                 this.chatParticipants.clear()
 
-                data.forEach(participant => {
+                data.forEach(async (participant) => {
+                    await axios.get(`usuario/profile-photo/${participant.id_usuario}`)
+                        .then(response => participant.profile_photo = response.data.photo)
+                        .catch(() => participant.profile_photo = null)
+
                     this.chatParticipants.set(participant.id_usuario, participant)
                 })
 

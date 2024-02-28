@@ -8,8 +8,8 @@
 <script setup>
 definePageMeta({
     layout: 'dashboard',
-    layoutTransition: {
-        name: 'login-fade',
+    pageTransition: {
+        name: 'page-transition'
     }
 })
 </script>

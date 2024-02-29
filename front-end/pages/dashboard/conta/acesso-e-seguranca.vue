@@ -5,5 +5,6 @@
 <script setup>
 definePageMeta({
 	name: 'Acesso e Segurança',
+	pageTransition: 'page-transition-fade',
 })
 </script>

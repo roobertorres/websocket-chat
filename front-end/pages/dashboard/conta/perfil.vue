@@ -1,32 +1,36 @@
 <template>
-	<h3>{{ useRoute().name }}</h3>
-	<Divider/>
-	<div class="field">
-		<label for="profile-photo">Foto de perfil</label>
-		<ContaPerfilProfilePhoto :photo="photo" :fetching="fetching" @new-photo="newPhoto"/>
-	</div>
-	<form @submit.prevent="saveProfile">
-		<div class="field">
-			<label for="profile-name">Seu nome</label>
-			<InputText id="profile-name" v-model="name" minlength="1" maxlength="45" class="w-full" required/>
-		</div>
-		<div class="field">
-			<label for="profile-email">Seu e-mail</label>
-			<InputText id="profile-email" v-model="email" type="email" minlength="1" maxlength="100" class="w-full"
-			           disabled required :loading="fetching"/>
-		</div>
+	<div>
+		<h3>{{ useRoute().name }}</h3>
 		<Divider/>
-		<div class="flex gap-2">
-			<Button label="Salvar" type="submit" :disabled="sameInformation" :loading="processing"/>
-			<Button label="Resetar" type="reset" :disabled="sameInformation || processing"
-			        @click="resetInformation" text/>
+		<div class="field">
+			<label for="profile-photo">Foto de perfil</label>
+			<ContaPerfilProfilePhoto :fetching="fetching" :photo="photo" @new-photo="newPhoto"/>
 		</div>
-	</form>
+		<form @submit.prevent="saveProfile">
+			<div class="field">
+				<label for="profile-name">Seu nome</label>
+				<InputText id="profile-name" v-model="name" class="w-full" maxlength="45" minlength="1" required/>
+			</div>
+			<div class="field">
+				<label for="profile-email">Seu e-mail</label>
+				<InputText id="profile-email" v-model="email" :loading="fetching" class="w-full" disabled
+				           maxlength="100"
+				           minlength="1" required type="email"/>
+			</div>
+			<Divider/>
+			<div class="flex gap-2">
+				<Button :disabled="sameInformation" :loading="processing" label="Salvar" type="submit"/>
+				<Button :disabled="sameInformation || processing" label="Resetar" text
+				        type="reset" @click="resetInformation"/>
+			</div>
+		</form>
+	</div>
 </template>
 
 <script setup>
 definePageMeta({
 	name: 'Perfil',
+	pageTransition: 'page-transition-fade',
 })
 
 const name = ref('')

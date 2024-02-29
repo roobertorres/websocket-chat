@@ -5,5 +5,6 @@
 <script setup>
 definePageMeta({
 	name: 'Privacidade',
+	pageTransition: 'page-transition-fade',
 })
 </script>

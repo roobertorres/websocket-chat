@@ -1,8 +1,8 @@
 <template>
 	<div class="login-container surface-card p-5 flex flex-column gap-3 border-round h-full w-full md:w-auto md:h-auto">
+		<img src="/images/ws-chat-logo.svg" class="py-2 m-auto" style="width: 13rem"/>
 		<form @submit.prevent="login()" class="login-wrapper">
 			<fieldset :disabled="processando" class="border-none">
-				<h1 class="mt-0">WS</h1>
 				<div class="field">
 					<label for="email">E-mail</label>
 					<InputText type="text" maxlength="100" id="email" v-model="email" class="w-full"/>

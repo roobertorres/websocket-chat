@@ -76,9 +76,9 @@
 definePageMeta({
 	layout: 'dashboard',
 	redirect: { name: 'Perfil' },
-	pageTransition: {
-		name: 'page-transition'
-	}
+	// pageTransition: {
+	// 	name: 'page-transition'
+	// }
 })
 
 </script>

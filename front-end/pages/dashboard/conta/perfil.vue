@@ -13,9 +13,22 @@
 			</div>
 			<div class="field">
 				<label for="profile-email">Seu e-mail</label>
-				<InputText id="profile-email" v-model="email" :loading="fetching" class="w-full" disabled
+				<InputText id="profile-email" :value="useUsuarioStore().getUsuarioEmail" :loading="fetching"
+				           class="w-full"
+				           disabled
 				           maxlength="100"
 				           minlength="1" required type="email"/>
+			</div>
+			<div class="field">
+				<label for="profile-register-date">Membro desde</label>
+				<p class="m-0">{{
+						new Date(register_date).toLocaleDateString('pt-BR', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+
+						})
+					}}</p>
 			</div>
 			<Divider/>
 			<div class="flex gap-2">
@@ -30,21 +43,21 @@
 <script setup>
 definePageMeta({
 	name: 'Perfil',
-	pageTransition: 'page-transition-fade',
+	// pageTransition: 'page-transition-fade',
 })
 
 const name = ref('')
-const email = ref('')
 const photo = ref('')
+let register_date = ''
 const processing = ref(false)
 const fetching = ref(true)
 
 onMounted(async () => {
 	try {
 		const { data } = await useNuxtApp().$axios.get('/account/profile')
-		name.value = data.name
-		email.value = data.email
+		name.value = data.nome_usuario
 		photo.value = data.photo
+		register_date = data.data_cadastro
 	}
 	catch (error) {
 		console.error(error)
@@ -81,14 +94,12 @@ const saveProfile = async () => {
 
 const sameInformation = computed(() => {
 	const same_name = name.value === useUsuarioStore().getNomeUsuario
-	const same_email = email.value === useUsuarioStore().getUsuarioEmail
 	const same_photo = photo.value === useUsuarioStore().getUsuarioPhoto
-	return same_name && same_email && same_photo
+	return same_name && same_photo
 })
 
 const resetInformation = () => {
 	name.value = useUsuarioStore().getNomeUsuario
-	email.value = useUsuarioStore().getUsuarioEmail
 	photo.value = useUsuarioStore().getUsuarioPhoto
 }
 

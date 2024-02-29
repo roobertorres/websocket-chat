@@ -1,18 +1,18 @@
 const jose = require('jose')
 
-module.exports = async function gerarJWT(usuario) {
+module.exports = async function gerarJWT(id, name, email) {
     const secret = new TextEncoder().encode(process.env.JWT_ENCODE_KEY)
     const alg = 'HS256'
 
     const jwt = await new jose.SignJWT({
-        'id_usuario': usuario.id_usuario,
-        'nome_usuario': usuario.nome_usuario,
-        'email': usuario.email,
+        'id_usuario': id,
+        'nome_usuario': name,
+        'email': email,
     })
         .setProtectedHeader({ alg })
         .setIssuedAt()
         .setIssuer('TORRES')
-        .setExpirationTime('2h')
+        .setExpirationTime('30d')
         .sign(secret)
 
         .catch(err => {

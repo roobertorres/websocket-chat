@@ -6,7 +6,7 @@ const path = require('path')
 router.get('/profile', async (req, res) => {
     const { id_usuario } = req
 
-    const [profile] = await db.query('SELECT nome_usuario, email FROM usuario WHERE id_usuario = ?', [id_usuario])
+    const [profile] = await db.query('SELECT nome_usuario, email, data_cadastro FROM usuario WHERE id_usuario = ?', [id_usuario])
     if (profile.length === 0) res.status(404).send('Usuário não encontrado')
 
     let base64Image = null
@@ -21,8 +21,7 @@ router.get('/profile', async (req, res) => {
     }
 
     res.send({
-        name: profile[0].nome_usuario,
-        email: profile[0].email,
+        ...profile[0],
         photo: base64Image,
     })
 })

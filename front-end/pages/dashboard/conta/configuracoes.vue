@@ -5,6 +5,6 @@
 <script setup>
 definePageMeta({
 	name: 'Configurações',
-	pageTransition: 'page-transition-fade',
+	// pageTransition: 'page-transition-fade',
 })
 </script>

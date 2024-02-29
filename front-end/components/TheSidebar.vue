@@ -3,7 +3,7 @@
 		<div class="flex-1 flex flex-column justify-content-between w-full gap-3">
 			<div class="flex flex-column gap-3 flex-1" style="overflow: hidden">
 				<div class="sidebar-header flex flex-column gap-1">
-					<h3 class="m-0 text-center">WS Chat</h3>
+					<img src="/images/ws-chat-logo.svg" class="w-full px-7 py-2"/>
 				</div>
 				<div class="flex flex-column gap-2">
 					<small>Gerenciar</small>

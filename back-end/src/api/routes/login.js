@@ -3,7 +3,7 @@ const db = require('../config/database')
 const gerarJWT = require('../functions/gerarJWT')
 const { rateLimit } = require("express-rate-limit")
 const bcrypt = require('bcrypt')
-const nodemailer = require("nodemailer");
+const sendEmailConfirmation = require('../functions/sendEmailConfirmation')
 
 const limiter = rateLimit({
     windowMs: 0.25 * 60 * 1000,
@@ -25,7 +25,7 @@ router.post('/', limiter, async (req, res) => {
     }
 
     try {
-        const [user] = await db.query('SELECT id_usuario, nome_usuario, email, senha FROM usuario WHERE email = ?', [email])
+        const [user] = await db.query('SELECT id_usuario, nome_usuario, email, senha, email_confirmed FROM usuario WHERE email = ?', [email])
         if (user.length === 0) return credenciaisInvalidas()
 
         bcrypt.compare(senha, user[0].senha, async (err, senha_correta) => {
@@ -36,16 +36,26 @@ router.post('/', limiter, async (req, res) => {
             }
 
             if (senha_correta) {
-                const jwt = await gerarJWT(user[0].id_usuario, user[0].nome_usuario, user[0].email)
+                if (!user[0].email_confirmed) {
+                    const [confirmation] = await db.query('SELECT * FROM user_email_confirmation WHERE user = ?', [user[0].id_usuario])
+                    if (confirmation.length === 0) {
+                        await sendEmailConfirmation(user[0].id_usuario, email, user[0].nome_usuario)
+                    }
 
-                if (jwt) {
-                    res.cookie('token', String(jwt), {
-                        httpOnly: true,
-                    })
-
-                    res.send({ mensagem: 'Bem-vindo(a) :)' })
+                    res.send({ requires_confirmation: true })
                 }
-                else return res.status(500).send({ mensagem: 'Houve um erro ao gerar o token' })
+                else {
+                    const jwt = await gerarJWT(user[0].id_usuario, user[0].nome_usuario, user[0].email)
+
+                    if (jwt) {
+                        res.cookie('token', String(jwt), {
+                            httpOnly: true,
+                        })
+
+                        res.send({ mensagem: 'Bem-vindo(a) :)' })
+                    }
+                    else return res.status(500).send({ mensagem: 'Houve um erro ao gerar o token' })
+                }
             }
             else {
                 credenciaisInvalidas()

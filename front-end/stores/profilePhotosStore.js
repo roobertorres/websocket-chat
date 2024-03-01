@@ -1,6 +1,6 @@
 import axios from '../plugins/axios'
 
-const useProfilePhotoStore = defineStore('profilePhotos', {
+export const useProfilePhotoStore = defineStore('profilePhotos', {
     state: () => ({
         profilePhotos: new Map(),
     }),
@@ -15,7 +15,7 @@ const useProfilePhotoStore = defineStore('profilePhotos', {
     },
     actions: {
         async fetchUserProfilePhoto(id) {
-            const {data} = await axios.get(`usuario/profile-photo/${id}`)
+            const { data } = await axios.get(`usuario/profile-photo/${id}`)
             this.profilePhotos.set(id, data)
         },
         setUserProfilePhoto(id, photo) {

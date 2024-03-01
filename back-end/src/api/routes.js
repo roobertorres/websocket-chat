@@ -2,6 +2,7 @@ const router = require('express').Router()
 
 router.use('/login', require('./routes/login.js'))
 router.use('/criar-conta', require('./routes/criar-conta.js'))
+router.use('/email-verification', require('./routes/email-verification.js'))
 
 router.use('/logout', require('./middlewares/auth.js'), require('./routes/logout.js'))
 router.use('/usuario', require('./middlewares/auth.js'), require('./routes/usuario.js'))

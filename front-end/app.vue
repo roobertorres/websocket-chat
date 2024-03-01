@@ -9,7 +9,7 @@
 
 .page-transition-enter-active,
 .page-transition-leave-active {
-	transition: 10s;
+	transition: .4s;
 	position: absolute;
 	width: 100%;
 	height: 100%;

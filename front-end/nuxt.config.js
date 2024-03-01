@@ -1,13 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
 export default defineNuxtConfig({
+    devtools: true,
     ssr: false,
     app: {
         head: {
             title: 'WebSocket Chat',
             meta: [
-                {charset: 'utf-8'},
-                {name: 'viewport', content: 'width=device-width, initial-scale=1'}
+                { charset: 'utf-8' },
+                { name: 'viewport', content: 'width=device-width, initial-scale=1' }
             ]
         }
     },

@@ -11,7 +11,7 @@ onMounted(async () => {
 		})
 
 	await navigateTo({
-		name: 'login',
+		name: 'Fazer login',
 		replace: true,
 		query: {
 			logout: true

@@ -1,14 +1,15 @@
 <template>
-    <div class="login-layout flex align-items-center h-full justify-content-center">
-        <NuxtPage />
-        <Toast position="bottom-center" />
-    </div>
+	<div class="login-layout flex align-items-center h-full justify-content-center">
+		<NuxtPage/>
+		<Toast position="bottom-center"/>
+	</div>
 </template>
 
-<style lang="scss">
-.login-layout {}
+<script setup>
+</script>
 
-.p-password-input {
-    width: 100%;
+<style lang="scss">
+.login-layout {
+	background: var(--surface-100);
 }
 </style>

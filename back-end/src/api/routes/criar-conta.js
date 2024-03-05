@@ -2,14 +2,16 @@ const db = require('../config/database.js')
 const gerarJWT = require('../functions/gerarJWT.js')
 const bcrypt = require('bcrypt')
 const sendEmailConfirmation = require('../functions/sendEmailConfirmation.js')
+const legit = require('legit')
 
 module.exports = async (req, res) => {
     let { nome, email, senha } = req.body
 
-    if (!nome || !email || !senha) {
-        res.status(422).send({ mensagem: 'Dados obrigatórios não informados' })
-        return
-    }
+    if (!nome || !email || !senha) return res.status(422).send({ mensagem: 'Dados obrigatórios não informados' })
+    if (senha.length < 8) return res.status(422).send({ mensagem: 'A senha deve ter no mínimo 8 caracteres' })
+    
+    const { isValid } = await legit(email)
+    if (!isValid) return res.status(422).send({ mensagem: 'Não podemos criar sua conta com este e-mail. Por favor, use outro.' })
 
     bcrypt.hash(senha, 10, async (err, hash) => {
         if (err) {
@@ -22,13 +24,13 @@ module.exports = async (req, res) => {
             await db.query('START TRANSACTION')
             const [user] = await db.execute('INSERT INTO usuario (nome_usuario, email, senha, data_cadastro) VALUES (?, ?, ?, ?)', [nome, email, hash, new Date()])
 
-            await sendEmailConfirmation(user.insertId, email, nome)
+            sendEmailConfirmation(user.insertId, email, nome)
+            await db.query('COMMIT')
 
             res.status(201).send({
-                mensagem: 'Conta criada! :)'
+                mensagem: 'Conta criada! :)',
             })
 
-            await db.query('COMMIT')
         }
         catch (error) {
             await db.query('ROLLBACK')

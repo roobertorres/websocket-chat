@@ -11,6 +11,9 @@
 	</div>
 </template>
 
+<script setup>
+</script>
+
 <style lang="scss">
 .dashboard-layout {
 	overflow: hidden;
@@ -28,5 +31,3 @@
 	}
 }
 </style>
-<script setup>
-</script>

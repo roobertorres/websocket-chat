@@ -1,9 +1,15 @@
 export const useLoginModalsStore = defineStore('loginModals', {
     state: () => ({
         email: '',
-        loginVisible: true,
-        createAccountVisible: false,
-        confirmEmailVisible: false,
-        forgotPasswordVisible: false,
     }),
+    getters: {
+        getEmail() {
+            return this.email
+        }
+    },
+    actions: {
+        setEmail(email) {
+            this.email = email.trim()
+        },
+    }
 })

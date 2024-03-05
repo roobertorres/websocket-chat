@@ -1,11 +1,5 @@
 <template>
-	<div class="text-center">
-		<Button label="Criar conta" class="w-full" outlined size="small"
-		        @click="useLoginModalsStore().createAccountVisible = true" dismissableMask/>
-	</div>
-	<Dialog :visible="useLoginModalsStore().createAccountVisible" header="Criar conta" :draggable="false"
-	        :closable="false"
-	        class="w-11 md:w-6 lg:w-25rem">
+	<div class="create-account-page">
 		<form @submit.prevent="createAccount()" class="flex flex-column">
 			<div class="field">
 				<label for="create-account-name">Seu nome</label>
@@ -22,26 +16,34 @@
 			</div>
 			<div class="field">
 				<label for="create-account-password">Senha</label>
-				<Password inputId="create-account-password" v-model="password" maxlength="100" class="w-full" toggleMask
-				          promptLabel="Digite uma senha" weakLabel="Fraca" mediumLabel="Satisfatória"
-				          strongLabel="Segura" :inputProps="{autocomplete: 'new-password'}"
-				          required/>
+				<Password v-model="password" maxlength="100" toggleMask class="w-full"
+				          :inputProps="{ required: true, id: 'create-account-password', autocomplete: 'new-password', }"
+				          :inputClass="'w-full'" :feedback="false"
+				/>
 			</div>
-			<Button label="Criar conta!" type="submit" :loading="processing" class="w-full field"/>
-			<Button label="Já tem uma conta?" text size="small" class="m-auto"
-			        @click="useLoginModalsStore().createAccountVisible=false"/>
+			<Button label="Criar conta" type="submit" :loading="processing" class="w-full field" rounded/>
+			<NuxtLink :to="{name:'Fazer login'}">
+				<Button label="Já tem uma conta?" text size="small" class="w-full" rounded/>
+			</NuxtLink>
 		</form>
-	</Dialog>
+		<Toast group="create-account" position="bottom-center"/>
+	</div>
 </template>
 
 <script setup>
+import { useLoginModalsStore } from "../../stores/loginModals.js";
+
+definePageMeta({
+	name: 'Criar conta',
+})
+
 const name = ref('')
 const email = ref('')
 const password = ref('')
 const processing = ref(false)
 
 const createAccount = async () => {
-	useNuxtApp().$toast.removeAllGroups()
+	useNuxtApp().$toast.removeGroup('create-account')
 	processing.value = true
 
 	try {
@@ -51,13 +53,20 @@ const createAccount = async () => {
 			senha: password.value.trim(),
 		})
 
-		await navigateTo('/dashboard')
+		useLoginModalsStore().setEmail(email.value.trim())
+
+		name.value = ''
+		email.value = ''
+		password.value = ''
+
+		await navigateTo({ name: 'Confirmar e-mail' })
 	}
 	catch (error) {
 		console.error(error)
 		useNuxtApp().$toast.add({
 			group: 'create-account',
 			severity: error.response ? 'info' : 'error',
+			summary: 'Oops!',
 			detail: error.response ? error.response.data.mensagem : 'Servidor indisponível',
 		})
 	}

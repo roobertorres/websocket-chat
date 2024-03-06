@@ -10,6 +10,9 @@ export default defineNuxtConfig({
                 { charset: 'utf-8' },
                 { name: 'viewport', content: 'width=device-width, initial-scale=1' }
             ]
+        },
+        layoutTransition: {
+            name: 'layout-transition',
         }
     },
     modules: ["nuxt-primevue", "@pinia/nuxt"],

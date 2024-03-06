@@ -1,7 +1,8 @@
-<template></template>
+<template>
+	<NuxtLoadingIndicator/>
+</template>
 
 <script setup>
-
 onMounted(async () => {
 	useNuxtApp().$axios.get('/logout')
 		.then(() => {

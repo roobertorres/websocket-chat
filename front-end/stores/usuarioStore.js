@@ -13,6 +13,9 @@ export const useUsuarioStore = defineStore('usuarioStore', {
         getUsuarioPhoto: (state) => state.usuario?.photo,
     },
     actions: {
+        setUsuario(usuario) {
+            this.usuario = usuario
+        },
         async buscarUsuario() {
             try {
                 const { data } = await axios.get('/usuario/dados')

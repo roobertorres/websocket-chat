@@ -1,7 +1,6 @@
 <template>
 	<div class="login-layout flex align-items-center h-full justify-content-center">
 		<NuxtPage/>
-		<Toast position="bottom-center"/>
 	</div>
 </template>
 

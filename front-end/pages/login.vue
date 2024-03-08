@@ -26,10 +26,12 @@ definePageMeta({
 	background: var(--surface-50);
 	max-width: 1000px;
 	width: 1000px;
+	transition: 1s;
 
 	.pages-container {
-		position: relative;
+		//position: relative;
 		display: grid;
+		transition: 1s;
 	}
 }
 </style>
@@ -38,13 +40,13 @@ definePageMeta({
 .login-pages-fade-enter-active,
 .login-pages-fade-leave-active {
 	grid-area: 1 / 1 / 2 / 2;
-	transition: .5s;
-	transition-delay: .5s;
+	transition: .25s;
+	transition-delay: .25s;
 }
 
 .login-pages-fade-leave-active {
-	position: absolute;
-	transition: .5s;
+	//position: absolute;
+	transition: .25s;
 }
 
 .login-pages-fade-leave-from,

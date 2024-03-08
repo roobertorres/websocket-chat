@@ -181,7 +181,7 @@ module.exports = async (id, email, name) => {
                                   <td align="left" style="padding:0;Margin:0;width:600px">
                                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                                      <tr>
-                                      <td align="center" style="padding:0;Margin:0"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:20px !important;letter-spacing:0;color:#333333;font-size:12px">WS Chat © 2024 TORRES. Nenhum direito reservado.</p><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:20px !important;letter-spacing:0;color:#999999;font-size:12px">Esta é uma mensagem automática, não a responda.</p></td>
+                                      <td align="center" style="padding:0;Margin:0"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:20px !important;letter-spacing:0;color:#333333;font-size:12px">WS Chat © ${new Date().getFullYear()} TORRES. Nenhum direito reservado.</p><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:20px !important;letter-spacing:0;color:#999999;font-size:12px">Esta é uma mensagem automática, não a responda.</p></td>
                                      </tr>
                                    </table></td>
                                  </tr>

@@ -96,9 +96,8 @@ const verifyEmail = async () => {
 	}
 }
 
-const dimiss = () => {
+const dimiss = async () => {
 	code.value = ''
-	useLoginModalsStore().confirmEmailVisible = false
-	useLoginModalsStore().loginVisible = true
+	await navigateTo({ name: 'Fazer login' })
 }
 </script>

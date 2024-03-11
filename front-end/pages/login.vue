@@ -4,7 +4,7 @@
 			<img src="/images/ws-chat-logo.svg" style="width: 12rem"/>
 			<div class="flex flex-column gap-1">
 				<h2>{{ useRoute().name }}</h2>
-				<small style="color: darkgray">WS Chat © {{ new Date().getFullYear() }} TORRES</small>
+				<small style="color: darkgray">WS Chat © {{ new Date().getFullYear() }} <b>Roberto Torres</b></small>
 				<small style="color: darkgray">Nenhum direito reservado.</small>
 			</div>
 		</div>

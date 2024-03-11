@@ -12,15 +12,7 @@
 				<InputText id="profile-name" v-model="name" class="w-full" maxlength="45" minlength="1" required/>
 			</div>
 			<div class="field">
-				<label for="profile-email">Seu e-mail</label>
-				<InputText id="profile-email" :value="useUsuarioStore().getUsuarioEmail" :loading="fetching"
-				           class="w-full"
-				           disabled
-				           maxlength="100"
-				           minlength="1" required type="email"/>
-			</div>
-			<div class="field">
-				<label for="profile-register-date">Membro desde</label>
+				<small>Membro desde</small>
 				<p class="m-0">{{
 						new Date(register_date).toLocaleDateString('pt-BR', {
 							year: 'numeric',

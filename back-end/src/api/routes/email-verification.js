@@ -1,6 +1,6 @@
 const router = require('express').Router()
-const db = require('../config/database')
-const sendEmailConfirmation = require('../functions/sendEmailMessage')
+const db = require('../config/database.js')
+const sendEmailConfirmation = require('../functions/emailMessages')
 const gerarJwt = require('../functions/gerarJWT')
 router.post('/resend-confirmation-code', async (req, res) => {
 	const { email } = req.body

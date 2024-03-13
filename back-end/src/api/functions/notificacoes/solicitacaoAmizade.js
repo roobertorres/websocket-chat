@@ -2,59 +2,59 @@ const { clients } = require('../../../websocket/websocket.js')
 const db = require('../../config/database.js')
 
 async function notificarSolicitacaoCancelada(solicitacao) {
-    if (solicitacao) {
-        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
-        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'CANCELAR_ENVIADA', solicitacao)
-        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'CANCELAR_RECEBIDA', solicitacao)
-    }
+	if (solicitacao) {
+		const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+		notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'CANCELAR_ENVIADA', solicitacao)
+		notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'CANCELAR_RECEBIDA', solicitacao)
+	}
 }
 
 async function notificarNovaSolicitacao(id) {
-    const solicitacao = await buscarSolicitacoes(id)
-    if (solicitacao) {
-        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
-        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ENVIADA', solicitacao)
-        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECEBIDA', solicitacao)
-    }
+	const solicitacao = await buscarSolicitacoes(id)
+	if (solicitacao) {
+		const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+		notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ENVIADA', solicitacao)
+		notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECEBIDA', solicitacao)
+	}
 }
 
 async function notificarSolicitacaoRecusada(id) {
-    const solicitacao = await buscarSolicitacoes(id)
-    if (solicitacao) {
-        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
-        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'RECUSADA', solicitacao)
-        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECUSOU', solicitacao)
-    }
+	const solicitacao = await buscarSolicitacoes(id)
+	if (solicitacao) {
+		const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+		notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'RECUSADA', solicitacao)
+		notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'RECUSOU', solicitacao)
+	}
 }
 
 async function notificarSolicitacaoAceita(id) {
-    const solicitacao = await buscarSolicitacoes(id)
-    if (solicitacao) {
-        const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
-        notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ACEITA', solicitacao)
-        notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'ACEITOU', solicitacao)
-    }
+	const solicitacao = await buscarSolicitacoes(id)
+	if (solicitacao) {
+		const { id_usuario_solicitante, id_usuario_solicitado } = solicitacao
+		notificarUsuario(id_usuario_solicitante, 'SOLICITACAO_AMIZADE', 'ACEITA', solicitacao)
+		notificarUsuario(id_usuario_solicitado, 'SOLICITACAO_AMIZADE', 'ACEITOU', solicitacao)
+	}
 }
 
 function notificarUsuario(id_usuario, grupo, tipo, solicitacao) {
-    const ws = clients.get(id_usuario)
+	const ws = clients.get(id_usuario)
 
-    if (ws) {
-        ws.forEach((conexao) => {
-            if (conexao) {
-                conexao.send(JSON.stringify({
-                    grupo,
-                    tipo,
-                    solicitacao: { ...solicitacao },
-                }))
-            }
-        })
-    }
+	if (ws) {
+		ws.forEach((conexao) => {
+			if (conexao) {
+				conexao.send(JSON.stringify({
+					grupo,
+					tipo,
+					solicitacao: { ...solicitacao },
+				}))
+			}
+		})
+	}
 }
 
 async function buscarSolicitacoes(id) {
-    const [result] = await db.query(
-        `
+	const [result] = await db.query(
+		`
     SELECT
         id_solicitacao_amizade,
         usuario_solicitante.id_usuario AS id_usuario_solicitante,
@@ -72,15 +72,15 @@ async function buscarSolicitacoes(id) {
     WHERE
         id_solicitacao_amizade = ?
         `,
-        [id])
+		[id])
 
-    return { ...result[0] }
+	return { ...result[0] }
 }
 
 module.exports = {
-    notificarNovaSolicitacao,
-    notificarSolicitacaoRecusada,
-    notificarSolicitacaoAceita,
-    notificarSolicitacaoCancelada,
-    buscarSolicitacoes
+	notificarNovaSolicitacao,
+	notificarSolicitacaoRecusada,
+	notificarSolicitacaoAceita,
+	notificarSolicitacaoCancelada,
+	buscarSolicitacoes
 }

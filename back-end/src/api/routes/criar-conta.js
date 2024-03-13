@@ -1,7 +1,7 @@
 const db = require('../config/database.js')
 const gerarJWT = require('../functions/gerarJWT.js')
 const bcrypt = require('bcrypt')
-const sendEmailConfirmation = require('../functions/sendEmailMessage.ts')
+const { sendEmailConfirmation } = require('../functions/emailMessages.ts')
 const legit = require('legit')
 
 module.exports = async (req, res) => {
@@ -23,9 +23,10 @@ module.exports = async (req, res) => {
 		try {
 			await db.query('START TRANSACTION')
 			const [user] = await db.execute('INSERT INTO usuario (nome_usuario, email, senha, data_cadastro) VALUES (?, ?, ?, ?)', [nome, email, hash, new Date()])
-			await db.query('COMMIT')
 
 			await sendEmailConfirmation(user.insertId, email, nome)
+
+			await db.query('COMMIT')
 
 			res.status(201).send({
 				mensagem: 'Conta criada! :)',

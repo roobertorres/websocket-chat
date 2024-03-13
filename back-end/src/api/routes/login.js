@@ -1,9 +1,9 @@
 const router = require('express').Router()
-const db = require('../config/database')
+const db = require('../config/database.js')
 const gerarJWT = require('../functions/gerarJWT')
 const { rateLimit } = require('express-rate-limit')
 const bcrypt = require('bcrypt')
-const sendEmailConfirmation = require('../functions/sendEmailMessage')
+const sendEmailConfirmation = require('../functions/emailMessages.ts')
 
 const limiter = rateLimit({
 	windowMs: 0.25 * 60 * 1000,

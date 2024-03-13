@@ -2,7 +2,7 @@ const { clients } = require('../../../websocket/websocket.js')
 const db = require('../../config/database.js')
 
 module.exports = async (id_usuario, status) => {
-    const [amigos] = await db.query(`
+	const [amigos] = await db.query(`
     SELECT
         usuario_solicitante
     AS
@@ -20,31 +20,31 @@ module.exports = async (id_usuario, status) => {
         usuario_solicitante = ?
     `, [id_usuario, id_usuario])
 
-    if (amigos.length > 0) {
+	if (amigos.length > 0) {
 
-        amigos.forEach(amigo => {
+		amigos.forEach(amigo => {
 
-            const ws = clients.get(amigo.id_usuario)
+			const ws = clients.get(amigo.id_usuario)
 
-            if (ws) {
-                ws.forEach(conexao => {
-                    conexao.send(JSON.stringify({
-                        grupo: 'FRIEND_ACTIVITY',
-                        tipo: status,
-                        id_usuario
-                    }))
-                })
-            }
-        })
-    }
+			if (ws) {
+				ws.forEach(conexao => {
+					conexao.send(JSON.stringify({
+						grupo: 'FRIEND_ACTIVITY',
+						tipo: status,
+						id_usuario
+					}))
+				})
+			}
+		})
+	}
 
-    if (status === 'OFFLINE') {
+	if (status === 'OFFLINE') {
 
-        try {
-            const [status_atual] = await db.query(`SELECT status FROM usuario WHERE id_usuario = ?`, [id_usuario])
+		try {
+			const [status_atual] = await db.query(`SELECT status FROM usuario WHERE id_usuario = ?`, [id_usuario])
 
-            await db.query('START TRANSACTION')
-            await db.execute(`
+			await db.query('START TRANSACTION')
+			await db.execute(`
                 UPDATE
                     usuario
                 SET
@@ -55,17 +55,17 @@ module.exports = async (id_usuario, status) => {
 
             `, [status, status_atual[0].status, id_usuario])
 
-            await db.query('COMMIT')
-        }
-        catch (error) {
-            await db.query('ROLLBACK')
-            console.log(error)
-        }
-    }
-    else {
-        try {
-            await db.query('START TRANSACTION')
-            await db.execute(`
+			await db.query('COMMIT')
+		}
+		catch (error) {
+			await db.query('ROLLBACK')
+			console.log(error)
+		}
+	}
+	else {
+		try {
+			await db.query('START TRANSACTION')
+			await db.execute(`
                 UPDATE
                     usuario
                 SET
@@ -76,11 +76,11 @@ module.exports = async (id_usuario, status) => {
 
             `, [status, status, id_usuario])
 
-            await db.query('COMMIT')
-        }
-        catch (error) {
-            await db.query('ROLLBACK')
-            console.log(error)
-        }
-    }
+			await db.query('COMMIT')
+		}
+		catch (error) {
+			await db.query('ROLLBACK')
+			console.log(error)
+		}
+	}
 }
